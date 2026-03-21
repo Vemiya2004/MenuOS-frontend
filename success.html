@@ -282,7 +282,7 @@
             receiptBtn.onclick = () => {
                 const fullReceiptUrl = receiptUrl.startsWith('http') 
                     ? receiptUrl 
-                    : 'http://192.168.8.100:5000' + receiptUrl;
+                    : 'https://menuos-backend.onrender.com' + receiptUrl;
                 window.open(fullReceiptUrl, '_blank');
             };
         }
