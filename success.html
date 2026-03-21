@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Successful</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon1/restaurant_logo-favicon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: rgba(0, 0, 0, 0.85);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .success-content {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .checkmark {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            animation: scale-up 0.5s ease-in-out;
+        }
+        
+        @keyframes scale-up {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke: #10b981;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        
+        .checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            stroke: #10b981;
+            stroke-width: 2;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+        
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+        
+        h1 {
+            font-size: 36px;
+            margin: 30px 0 10px 0;
+            color: #1f2937;
+        }
+        
+        .success-text {
+            font-size: 18px;
+            color: #10b981;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        
+        .order-box {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        
+        .order-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .order-id {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2D7A7C;
+        }
+        
+        .message {
+            color: #6b7280;
+            margin: 20px 0;
+        }
+        
+        .sub-message {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-receipt {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-receipt:hover {
+            background: #e5e7eb;
+            transform: translateY(-2px);
+        }
+        
+        .btn-menu {
+            background: linear-gradient(135deg, #2D7A7C, #1f5456);
+            color: white;
+        }
+        
+        .btn-menu:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(45, 122, 124, 0.3);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            z-index: 10001;
+            animation: confetti-fall 3s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+            to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-content">
+        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+        
+        <h1>
+         <span>
+            <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M341.9 38.1C328.5 29.9 311.6 29.9 298.2 38.1C273.8 53 258.7 57 230.1 56.4C214.4 56 199.8 64.5 192.2 78.3C178.5 103.4 167.4 114.5 142.3 128.2C128.5 135.7 120.1 150.4 120.4 166.1C121.1 194.7 117 209.8 102.1 234.2C93.9 247.6 93.9 264.5 102.1 277.9C117 302.3 121 317.4 120.4 346C120 361.7 128.5 376.3 142.3 383.9C164.4 396 175.6 406 187.4 425.4L138.7 522.5C132.8 534.4 137.6 548.8 149.4 554.7L235.4 597.7C246.9 603.4 260.9 599.1 267.1 587.9L319.9 492.8L372.7 587.9C378.9 599.1 392.9 603.5 404.4 597.7L490.4 554.7C502.3 548.8 507.1 534.4 501.1 522.5L452.5 425.3C464.2 405.9 475.5 395.9 497.6 383.8C511.4 376.3 519.8 361.6 519.5 345.9C518.8 317.3 522.9 302.2 537.8 277.8C546 264.4 546 247.5 537.8 234.1C522.9 209.7 518.9 194.6 519.5 166C519.9 150.3 511.4 135.7 497.6 128.1C472.5 114.4 461.4 103.3 447.7 78.2C440.2 64.4 425.5 56 409.8 56.3C381.2 57 366.1 52.9 341.7 38zM320 160C373 160 416 203 416 256C416 309 373 352 320 352C267 352 224 309 224 256C224 203 267 160 320 160z"/></svg>
+         </span>Congratulations!
+        </h1>
+        <p class="success-text">Order Placed Successfully</p>
+        
+        <div class="order-box">
+            <p class="order-label">ORDER ID</p>
+            <p class="order-id" id="orderId">Loading...</p>
+        </div>
+        
+        <!-- Order Summary Section -->
+        <div class="order-summary-section" id="orderSummarySection" style="display: none;">
+            <h3 style="font-size: 18px; color: #1f2937; margin: 20px 0 10px 0; text-align: left;">Order Summary</h3>
+            <div id="orderItems" style="background: #f9fafb; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left;">
+                <!-- Items will be inserted here -->
+            </div>
+            <div style="border-top: 2px solid #e5e7eb; padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #6b7280;">Subtotal</span>
+                    <span id="summarySubtotal" style="color: #1f2937; font-weight: 500;">LKR 0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #6b7280;">Tax (10%)</span>
+                    <span id="summaryTax" style="color: #1f2937; font-weight: 500;">LKR 0.00</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 2px solid #2D7A7C;">
+                    <span style="color: #1f2937; font-weight: 600; font-size: 18px;">Total</span>
+                    <span id="summaryTotal" style="color: #2D7A7C; font-weight: 700; font-size: 18px;">LKR 0.00</span>
+                </div>
+            </div>
+        </div>
+        
+        <p class="message">Your delicious food is being prepared!</p>
+        <p class="sub-message">We'll have it ready for you shortly.</p>
+        
+        
+        <div class="buttons">
+            <button class="btn btn-receipt" id="receiptBtn">
+                <span>
+                    <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--!Font Awesome Free v5.15.4 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M358.4 3.2L320 48 265.6 3.2a15.9 15.9 0 0 0-19.2 0L192 48 137.6 3.2a15.9 15.9 0 0 0-19.2 0L64 48 25.6 3.2C15-4.7 0 2.8 0 16v480c0 13.2 15 20.7 25.6 12.8L64 464l54.4 44.8a15.9 15.9 0 0 0 19.2 0L192 464l54.4 44.8a15.9 15.9 0 0 0 19.2 0L320 464l38.4 44.8c10.5 7.9 25.6.4 25.6-12.8V16c0-13.2-15-20.7-25.6-12.8zM320 360c0 4.4-3.6 8-8 8H72c-4.4 0-8-3.6-8-8v-16c0-4.4 3.6-8 8-8h240c4.4 0 8 3.6 8 8v16zm0-96c0 4.4-3.6 8-8 8H72c-4.4 0-8-3.6-8-8v-16c0-4.4 3.6-8 8-8h240c4.4 0 8 3.6 8 8v16zm0-96c0 4.4-3.6 8-8 8H72c-4.4 0-8-3.6-8-8v-16c0-4.4 3.6-8 8-8h240c4.4 0 8 3.6 8 8v16z"/></svg>
+                </span> Receipt</button>
+            <button class="btn btn-menu" id="menuBtn">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // ⭐ Clear session flags immediately
+        sessionStorage.removeItem('orderSuccessful');
+        sessionStorage.removeItem('redirecting');
+        
+        // Get order details from URL
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get('orderId');
+        const tableNumber = params.get('table');
+        const receiptUrl = params.get('receipt');
+        const summaryData = params.get('summary');
+        
+        console.log('🎉 SUCCESS PAGE LOADED');
+        console.log('Order ID:', orderId);
+        console.log('Table:', tableNumber);
+        console.log('Receipt:', receiptUrl);
+        
+        // Display order ID
+        if (orderId && orderId !== 'null' && orderId !== '') {
+            document.getElementById('orderId').textContent = orderId;
+        } else {
+            document.getElementById('orderId').textContent = 'Processing...';
+        }
+        
+        // Display order summary if available
+        if (summaryData) {
+            try {
+                const summary = JSON.parse(atob(summaryData));
+                console.log('Order Summary:', summary);
+                
+                // Show summary section
+                document.getElementById('orderSummarySection').style.display = 'block';
+                
+                // Display items
+                const orderItemsDiv = document.getElementById('orderItems');
+                orderItemsDiv.innerHTML = summary.items.map(item => {
+                    const displayName = item.size ? `${item.name} (${item.size})` : item.name;
+                    return `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
+                            <span style="color: #374151;">${item.quantity} x ${displayName}</span>
+                            <span style="color: #1f2937; font-weight: 500;">LKR ${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Display totals
+                document.getElementById('summarySubtotal').textContent = `LKR ${summary.subtotal.toFixed(2)}`;
+                document.getElementById('summaryTax').textContent = `LKR ${summary.tax.toFixed(2)}`;
+                document.getElementById('summaryTotal').textContent = `LKR ${summary.total.toFixed(2)}`;
+                
+            } catch (error) {
+                console.error('Error parsing summary:', error);
+            }
+        }
+        
+        // Show receipt button if URL exists
+        if (receiptUrl && receiptUrl !== 'null' && receiptUrl !== '') {
+            const receiptBtn = document.getElementById('receiptBtn');
+            receiptBtn.style.display = 'block';
+            receiptBtn.onclick = () => {
+                const fullReceiptUrl = receiptUrl.startsWith('http') 
+                    ? receiptUrl 
+                    : 'http://192.168.8.100:5000' + receiptUrl;
+                window.open(fullReceiptUrl, '_blank');
+            };
+        }
+        
+        // Back to menu button
+        document.getElementById('menuBtn').onclick = () => {
+            // Clear cart and go to menu
+            localStorage.removeItem('cart');
+            localStorage.removeItem('paymentMethod');
+            window.location.href = `menu.html?table=${tableNumber || 1}`;
+        };
+        
+        // Create confetti
+        setTimeout(() => {
+            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+            
+            for (let i = 0; i < 60; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 25);
+            }
+            
+            // Play success sound
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [523.25, 659.25, 783.99];
+                
+                notes.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = 'sine';
+                    
+                    const startTime = audioContext.currentTime + (index * 0.15);
+                    const duration = 0.2;
+                    
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+                    
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + duration);
+                });
+            } catch (error) {
+                console.log('Audio not supported');
+            }
+        }, 1200);
+    </script>
+</body>
+</html>

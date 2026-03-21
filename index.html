@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Restaurant Ordering</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon1/restaurant_logo-favicon.png">
+</head>
+<body>
+    <div class="landing-container">
+        <div class="landing-card">
+            <div class="landing-icon">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <h1 class="landing-title">Welcome!</h1>
+            <p class="table-info" id="tableInfo">Scan QR Code to Start</p>
+            
+            <div class="qr-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                </svg>
+            </div>
+            
+            <p class="landing-description">
+                Browse our delicious menu and place your order directly from your table
+            </p>
+            
+            <!-- ⭐ NEW: Secret Admin Access -->
+            <div style="margin: 20px 0;">
+                <input 
+                    type="text" 
+                    id="secretInput" 
+                    placeholder="Search or enter code..."
+                    style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; text-align: center;"
+                >
+            </div>
+            
+            <button id="startOrderingBtn" class="btn-primary" disabled>
+                Start Ordering
+            </button>
+            
+            <p class="error-message" id="errorMessage" style="display: none;">
+                Please scan the QR code on your table
+            </p>
+        </div>
+    </div>
+
+    <script>
+(async function() {
+    const API_BASE_URL = 'http://192.168.8.100:5000';
+ 
+    // Get table number from URL (?table=3)
+    const params = new URLSearchParams(window.location.search);
+    const table = params.get('table');
+ 
+    // If no table number, show normal landing page (don't redirect)
+    if (!table) {
+        console.log('ℹ️ No table number - showing landing page normally');
+        return;
+    }
+ 
+    console.log('📱 QR scanned for Table:', table);
+    console.log('🎫 Generating token...');
+ 
+    try {
+        // ⭐ Generate a fresh token for this scan
+        const res = await fetch(`${API_BASE_URL}/api/generate-token?table=${table}`);
+        const data = await res.json();
+ 
+        if (data.success) {
+            console.log('✅ Token generated:', data.token.substring(0, 10) + '...');
+            // Redirect to menu with token
+            window.location.replace(
+                `menu.html?table=${table}&token=${data.token}`
+            );
+        } else {
+            console.error('❌ Token generation failed:', data.error);
+            // Fallback: go to menu without token (will show expired screen)
+            window.location.replace(`menu.html?table=${table}`);
+        }
+ 
+    } catch (err) {
+        console.error('❌ Network error generating token:', err);
+        window.location.replace(`menu.html?table=${table}`);
+    }
+})();
+</script>
+    
+    <style>
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.95); }
+        }
+    </style>
+</body>
+</html>
