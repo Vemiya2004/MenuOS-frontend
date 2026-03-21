@@ -3,7 +3,7 @@
 // ⭐ Validates token on page load, blocks expired sessions
 // =====================================================
 
-const API_BASE_URL = 'http://192.168.8.100:5000';
+const API_BASE_URL = 'https://menuos-backend.onrender.com';
 
 const urlParams = new URLSearchParams(window.location.search);
 const tableNumber = urlParams.get('table') || 1;
