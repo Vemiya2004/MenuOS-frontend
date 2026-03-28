@@ -231,6 +231,7 @@
         const tableNumber = params.get('table');
         const receiptUrl = params.get('receipt');
         const summaryData = params.get('summary');
+        const token = parms.get('token');
         
         console.log('🎉 SUCCESS PAGE LOADED');
         console.log('Order ID:', orderId);
@@ -292,7 +293,12 @@
             // Clear cart and go to menu
             localStorage.removeItem('cart');
             localStorage.removeItem('paymentMethod');
-            window.location.href = `menu.html?table=${tableNumber || 1}`;
+
+            if (token) {
+                window.location.href = `menu.html?table=${tableNumber || 1}&token=${encodeURIComponent(token || '')}`;
+            }  else {
+                window.location.href = `menu.html?table=${tableNumber || 1}`;
+            }    
         };
         
         // Create confetti
