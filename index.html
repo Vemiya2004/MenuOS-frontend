@@ -86,7 +86,7 @@
         } else {
             console.error('❌ Token generation failed:', data.error);
             // Fallback: go to menu without token (will show expired screen)
-            window.location.replace(`menu.html?table=${table}`);
+            window.location.replace(`menu.html?table=${table}&token=${data.token}`);
         }
  
     } catch (err) {
