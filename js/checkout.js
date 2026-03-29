@@ -570,6 +570,7 @@ function clearAllPaymentForms() {
 
 function processPayment() {
     console.log(' Preparing PayHere payment...');
+    submitOrder();
 }
 
 function getCardType(number) {
