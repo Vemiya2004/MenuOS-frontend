@@ -569,7 +569,7 @@ function clearAllPaymentForms() {
 }
 
 function processPayment() {
-    concole.log(' Preparing PayHere payment...');
+    console.log(' Preparing PayHere payment...');
 }
 
 function getCardType(number) {
