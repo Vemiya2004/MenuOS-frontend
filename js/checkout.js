@@ -403,6 +403,84 @@ function setupEventListeners() {
 // =====================================================
 
 let selectedPaymentGateway = null;
+// =====================================================
+// PAYHERE
+// =====================================================
+
+async function createPayHereSession(orderData) {
+    const res = await fetch(`${API_BASE_URL}/api/payhere/session`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            order_id: orderData.order_id,
+            amount: orderData.total,
+            table_number: orderData.table_number,
+            items_label: `Table ${orderData.table_number} Restaurant Order`
+        })
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+        throw new Error(result.error || 'Failed to create PayHere session');
+    }
+
+    return result;
+}
+
+async function startPayHerePayment(orderResult, orderData) {
+    const payment = await createPayHereSession({
+        order_id: orderResult.order_id,
+        total: orderData.total,
+        table_number: orderData.table_number
+    });
+
+    payhere.onCompleted = function(orderId) {
+        console.log("✅ PayHere payment completed:", orderId);
+        localStorage.removeItem('cart');
+
+        if (orderResult.redirect_url) {
+            window.location.href = orderResult.redirect_url;
+        } else {
+            window.location.href = `success.html?orderId=${encodeURIComponent(orderResult.order_id)}&table=${tableNumber}&token=${encodeURIComponent(sessionToken)}`;
+        }
+    };
+
+    payhere.onDismissed = function() {
+        console.warn("⚠️ PayHere popup dismissed");
+
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        confirmBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+        isSubmitting = false;
+
+        showToast('Payment cancelled', 'warning');
+    };
+
+    payhere.onError = function(error) {
+        console.error("❌ PayHere error:", error);
+
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        confirmBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+        isSubmitting = false;
+
+        showErrorModal(typeof error === 'string' ? error : 'Payment gateway error');
+    };
+
+    payhere.startPayment(payment);
+}
 
 function showPaymentGateway() {
     console.log('💳 Showing payment gateway');
