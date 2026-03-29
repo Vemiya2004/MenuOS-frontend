@@ -296,11 +296,11 @@ async function submitOrder() {
             tax: parseFloat(tax.toFixed(2)),
             total: parseFloat(total.toFixed(2)),
             payment_method: paymentMethod,
-            payment_status: paymentMethod === 'pay-now' ? 'paid' : 'pending',
+            payment_status: 'pending',
             payment_details: paymentMethod === 'pay-now' && selectedPaymentGateway
                 ? collectPaymentDetails()
                 : null,
-            token: sessionToken  // ⭐ Send token with order for backend validation
+            token: sessionToken
         };
 
         const response = await fetch(`${API_BASE_URL}/api/order`, {
@@ -318,17 +318,20 @@ async function submitOrder() {
         if (response.ok && result.success) {
             console.log('✅ Order successful:', result.order_id);
 
-            // Clear cart after successful order
+            if (paymentMethod === 'pay-now') {
+                await startPayHerePayment(result, orderData);
+                return;
+            }
+
             localStorage.removeItem('cart');
 
             if (result.redirect_url) {
                 window.location.href = result.redirect_url;
             } else {
-                window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${tableNumber}`;
+                window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${tableNumber}&token=${encodeURIComponent(sessionToken)}`;
             }
 
         } else if (response.status === 401) {
-            // ⭐ Token expired during checkout
             showSessionExpiredScreen();
         } else {
             throw new Error(result.error || 'Order failed');
@@ -566,18 +569,7 @@ function clearAllPaymentForms() {
 }
 
 function processPayment() {
-    console.log('💳 Processing payment...');
-    const confirmBtn = document.getElementById('confirmOrderBtn');
-    const btnText = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-    confirmBtn.disabled = true;
-    btnText.textContent = 'Processing Payment...';
-    btnSpinner.style.display = 'block';
-
-    setTimeout(() => {
-        console.log('✅ Payment successful!');
-        submitOrder();
-    }, 2000);
+    concole.log(' Preparing PayHere payment...');
 }
 
 function getCardType(number) {
