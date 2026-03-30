@@ -295,11 +295,9 @@ async function submitOrder() {
             subtotal: parseFloat(subtotal.toFixed(2)),
             tax: parseFloat(tax.toFixed(2)),
             total: parseFloat(total.toFixed(2)),
-            payment_method: paymentMethod,
+            payment_method: paymentMethod === 'pay-now' ? 'PayHere' : paymentMethod,
             payment_status: 'pending',
-            payment_details: paymentMethod === 'pay-now' && selectedPaymentGateway
-                ? collectPaymentDetails()
-                : null,
+            payment_details: paymentMethod === 'pay-now' ? null : collectPaymentDetails(),
             token: sessionToken
         };
 
@@ -316,7 +314,7 @@ async function submitOrder() {
         console.log('📥 Response:', result);
 
         if (response.ok && result.success) {
-            console.log('✅ Order successful:', result.order_id);
+            console.log('✅ Order created:', result.order_id);
 
             if (paymentMethod === 'pay-now') {
                 await startPayHerePayment(result, orderData);
@@ -340,13 +338,17 @@ async function submitOrder() {
     } catch (error) {
         console.error('❌ Error:', error);
         showErrorModal(error.message || 'Error submitting order');
+
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
         confirmBtn.disabled = false;
         btnText.style.display = 'inline';
         btnSpinner.style.display = 'none';
         isSubmitting = false;
     }
 }
-
 // =====================================================
 // ERROR MODAL
 // =====================================================
@@ -406,6 +408,81 @@ function setupEventListeners() {
 // =====================================================
 
 let selectedPaymentGateway = null;
+
+async function createPayHereSession(orderData) {
+    const res = await fetch(`${API_BASE_URL}/api/payhere/session`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            order_id: orderData.order_id,
+            amount: orderData.total,
+            table_number: orderData.table_number,
+            items_label: `Table ${orderData.table_number} Restaurant Order`
+        })
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+        throw new Error(result.error || 'Failed to create PayHere session');
+    }
+
+    return result;
+}
+
+async function startPayHerePayment(orderResult, orderData) {
+    const payment = await createPayHereSession({
+        order_id: orderResult.order_id,
+        total: orderData.total,
+        table_number: orderData.table_number
+    });
+
+    payhere.onCompleted = function(orderId) {
+        console.log("✅ PayHere payment completed:", orderId);
+
+        localStorage.removeItem('cart');
+
+        setTimeout(() => {
+            window.location.href = `payment-result.html?orderId=${encodeURIComponent(orderResult.order_id)}&table=${tableNumber}&token=${encodeURIComponent(sessionToken)}`;
+        }, 1500);
+    };
+
+    payhere.onDismissed = function() {
+        console.warn("⚠️ PayHere popup dismissed");
+
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        confirmBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+        isSubmitting = false;
+
+        showToast('Payment cancelled', 'warning');
+    };
+
+    payhere.onError = function(error) {
+        console.error("❌ PayHere error:", error);
+
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        confirmBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+        isSubmitting = false;
+
+        showErrorModal(typeof error === 'string' ? error : 'Payment gateway error');
+    };
+
+    payhere.startPayment(payment);
+}
+
 // =====================================================
 // PAYHERE
 // =====================================================
@@ -503,6 +580,14 @@ function setupPaymentMethodSelection() {
             option.classList.add('selected');
             selectedPaymentGateway = option.dataset.method;
 
+            // ✅ Cards click කළාම direct PayHere
+            if (selectedPaymentGateway === 'card') {
+                document.getElementById('paymentGatewayModal').classList.remove('active');
+                processPayment();
+                return;
+            }
+
+            // ✅ Other methods -> custom details screen
             document.getElementById('paymentMethodStep').classList.remove('active');
             document.getElementById('paymentMethodStep').style.display = 'none';
             document.getElementById('paymentDetailsStep').classList.add('active');
@@ -535,8 +620,15 @@ function setupPaymentMethodSelection() {
             document.getElementById('paymentGatewayModal').classList.remove('active');
             resetPaymentGateway();
             showToast('Payment Cancelled!', 'warning');
+
             const confirmBtn = document.getElementById('confirmOrderBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+
             if (confirmBtn) confirmBtn.disabled = false;
+            if (btnText) btnText.style.display = 'inline';
+            if (btnSpinner) btnSpinner.style.display = 'none';
+
             isSubmitting = false;
         };
     }
@@ -546,10 +638,11 @@ function setupPaymentMethodSelection() {
         payBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (selectedPaymentGateway) {
-                document.getElementById('paymentGatewayModal').classList.remove('active');
-                processPayment();
-            }
+
+            if (!selectedPaymentGateway) return;
+
+            document.getElementById('paymentGatewayModal').classList.remove('active');
+            processPayment();
         };
     }
 }
@@ -584,32 +677,33 @@ function getCardType(number) {
 
 function collectPaymentDetails() {
     let details = { gateway: selectedPaymentGateway, type: selectedPaymentGateway };
-    if (selectedPaymentGateway === 'card') {
-        document.getElementById('paymentGatewayModal').classList.remove('active');
-        processPayment();
-        return;
-    }
+
     if (selectedPaymentGateway === 'stripe') {
         const number = document.getElementById('stripeNumber')?.value || '';
         details.card_last4 = number.replace(/\s/g, '').slice(-4);
         details.card_type = getCardType(number);
     }
+
     if (selectedPaymentGateway === 'binance') {
         details.account_id = document.getElementById('binanceId')?.value || '';
         details.type = 'Binance Pay';
     }
+
     if (selectedPaymentGateway === 'applepay') {
         details.account_id = document.getElementById('appleId')?.value || '';
         details.type = 'Apple Pay';
     }
+
     if (selectedPaymentGateway === 'googlepay') {
         details.account_id = document.getElementById('googleEmail')?.value || '';
         details.type = 'Google Pay';
     }
+
     if (selectedPaymentGateway === 'bybit') {
         details.account_id = document.getElementById('bybitId')?.value || '';
         details.type = 'Bybit Pay';
     }
+    
     return details;
 }
 
