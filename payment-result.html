@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Processing Payment...</title>
+</head>
+<body>
+<script>
+const params = new URLSearchParams(window.location.search);
+
+// PayHere params
+const status = params.get("status_code");
+const orderId = params.get("order_id");
+
+// 🧠 IMPORTANT: fallback check
+if (status === "2") {
+    // ✅ SUCCESS
+    window.location.href = `success.html?orderId=${orderId}`;
+} else {
+    // ❌ FAILED / DECLINED
+    alert("Payment Failed ❌");
+    window.location.href = "checkout.html";
+}
+</script>
+</body>
+</html>
