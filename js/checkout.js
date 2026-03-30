@@ -316,11 +316,6 @@ async function submitOrder() {
         if (response.ok && result.success) {
             console.log('✅ Order created:', result.order_id);
 
-            if (paymentMethod === 'pay-now') {
-                await startPayHerePayment(result, orderData);
-                return;
-            }
-
             localStorage.removeItem('cart');
 
             if (result.redirect_url) {
@@ -349,6 +344,83 @@ async function submitOrder() {
         isSubmitting = false;
     }
 }
+
+async function submitOrderAfterPayment() {
+    console.log('📤 Saving paid order after successful payment...');
+
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const confirmBtn = document.getElementById('confirmOrderBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    confirmBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnSpinner.style.display = 'block';
+
+    try {
+        const { subtotal, tax, total } = calculateTotals();
+
+        const orderData = {
+            table_number: parseInt(tableNumber),
+            items: cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                size: item.size || null,
+                image: item.image_url
+            })),
+            subtotal: parseFloat(subtotal.toFixed(2)),
+            tax: parseFloat(tax.toFixed(2)),
+            total: parseFloat(total.toFixed(2)),
+            payment_method: 'PayHere',
+            payment_status: 'paid',
+            payment_details: {
+                gateway: 'PayHere',
+                type: 'Cards'
+            },
+            token: sessionToken
+        };
+
+        const response = await fetch(`${API_BASE_URL}/api/order`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        const result = await response.json();
+        console.log('📥 Paid order response:', result);
+
+        if (response.ok && result.success) {
+            localStorage.removeItem('cart');
+
+            if (result.redirect_url) {
+                window.location.href = result.redirect_url;
+            } else {
+                window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${tableNumber}&token=${encodeURIComponent(sessionToken)}`;
+            }
+        } else if (response.status === 401) {
+            showSessionExpiredScreen();
+        } else {
+            throw new Error(result.error || 'Order save failed after payment');
+        }
+
+    } catch (error) {
+        console.error('❌ Error saving paid order:', error);
+        showErrorModal(error.message || 'Payment was successful, but order saving failed');
+
+        confirmBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+        isSubmitting = false;
+    }
+}
+
 // =====================================================
 // ERROR MODAL
 // =====================================================
@@ -408,6 +480,63 @@ function setupEventListeners() {
 // =====================================================
 
 let selectedPaymentGateway = null;
+
+async function startCardGatewayOnly() {
+    try {
+        const { total } = calculateTotals();
+
+        const tempOrderId = `TEMP-${Date.now()}`;
+
+        const payment = await createPayHereSession({
+            order_id: tempOrderId,
+            total: total,
+            table_number: parseInt(tableNumber)
+        });
+
+        payhere.onCompleted = async function(orderId) {
+            console.log("✅ PayHere payment completed:", orderId);
+
+            // payment success උනාට පස්සේ විතරක් order save කරන්න
+            await submitOrderAfterPayment();
+        };
+
+        payhere.onDismissed = function() {
+            console.warn("⚠️ PayHere popup dismissed");
+
+            const confirmBtn = document.getElementById('confirmOrderBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+
+            confirmBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnSpinner.style.display = 'none';
+            isSubmitting = false;
+
+            showToast('Payment cancelled', 'warning');
+        };
+
+        payhere.onError = function(error) {
+            console.error("❌ PayHere error:", error);
+
+            const confirmBtn = document.getElementById('confirmOrderBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+
+            confirmBtn.disabled = false;
+            btnText.style.display = 'inline';
+            btnSpinner.style.display = 'none';
+            isSubmitting = false;
+
+            showErrorModal(typeof error === 'string' ? error : 'Payment gateway error');
+        };
+
+        payhere.startPayment(payment);
+
+    } catch (error) {
+        console.error("❌ Failed to start card gateway:", error);
+        showErrorModal(error.message || 'Failed to start payment');
+    }
+}
 
 async function createPayHereSession(orderData) {
     const res = await fetch(`${API_BASE_URL}/api/payhere/session`, {
@@ -682,6 +811,12 @@ function collectPaymentDetails() {
         const number = document.getElementById('stripeNumber')?.value || '';
         details.card_last4 = number.replace(/\s/g, '').slice(-4);
         details.card_type = getCardType(number);
+    }
+
+    if (selectedPaymentGateway === 'card') {
+        document.getElementById('paymentGatewayModal').classList.remove('active');
+        startCardGatewayOnly();
+        return;
     }
 
     if (selectedPaymentGateway === 'binance') {
