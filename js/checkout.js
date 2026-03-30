@@ -585,19 +585,14 @@ function getCardType(number) {
 function collectPaymentDetails() {
     let details = { gateway: selectedPaymentGateway, type: selectedPaymentGateway };
     if (selectedPaymentGateway === 'card') {
-        const number = document.getElementById('cardNumber')?.value || '';
-        details.card_last4 = number.replace(/\s/g, '').slice(-4);
-        details.card_type = getCardType(number);
+        document.getElementById('paymentGatewayModal').classList.remove('active');
+        processPayment();
+        return;
     }
     if (selectedPaymentGateway === 'stripe') {
         const number = document.getElementById('stripeNumber')?.value || '';
         details.card_last4 = number.replace(/\s/g, '').slice(-4);
         details.card_type = getCardType(number);
-    }
-    if (selectedPaymentGateway === 'amex') {
-        const number = document.getElementById('amexNumber')?.value || '';
-        details.card_last4 = number.replace(/\s/g, '').slice(-4);
-        details.card_type = 'American Express';
     }
     if (selectedPaymentGateway === 'binance') {
         details.account_id = document.getElementById('binanceId')?.value || '';
@@ -614,9 +609,6 @@ function collectPaymentDetails() {
     if (selectedPaymentGateway === 'bybit') {
         details.account_id = document.getElementById('bybitId')?.value || '';
         details.type = 'Bybit Pay';
-    }
-    if (selectedPaymentGateway === 'qr') {
-        details.type = 'QR Scan Pay';
     }
     return details;
 }
