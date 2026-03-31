@@ -100,6 +100,21 @@ function showSessionExpiredScreen() {
     `;
 }
 
+function resetCheckoutButtonState() {
+    isSubmitting = false;
+
+    const confirmBtn = document.getElementById('confirmOrderBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (btnText) {
+        btnText.style.display = 'inline';
+        btnText.textContent = 'Confirm Order';
+    }
+    if (btnSpinner) btnSpinner.style.display = 'none';
+}
+
 // =====================================================
 // INITIALIZATION
 // =====================================================
@@ -130,8 +145,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     renderOrderSummary();
+    function resetCheckoutButtonState() {
+        isSubmitting = false;
+
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        if (confirmBtn) confirmBtn.disabled = false;
+        if (btnText) {
+            btnText.style.display = 'inline';
+            btnText.textContent = 'Confirm Order';
+        }
+        if (btnSpinner) btnSpinner.style.display = 'none';
+    }
+
     setupEventListeners();
     createConfirmationModal();
+    
+    if (sessionStorage.getItem('payment_failed_return') === "1") {
+        sessionStorage.removeItem('payment_failed_return');
+        showToast('Payment declined. Please try again.', 'warning');
+    }
+
+    function resetCheckoutButtonState() {
+        isSubmitting = false;
+
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        if (confirmBtn) confirmBtn.disabled = false;
+        if (btnText) {
+            btnText.style.display = 'inline';
+            btnText.textContent = 'Confirm Order';
+        }
+        if (btnSpinner) btnSpinner.style.display = 'none';
+    }
+    resetCheckoutButtonState();
 
     console.log('✅ Checkout initialized');
 });
