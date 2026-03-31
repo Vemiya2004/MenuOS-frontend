@@ -345,81 +345,6 @@ async function submitOrder() {
     }
 }
 
-async function submitOrderAfterPayment() {
-    console.log('📤 Saving paid order after successful payment...');
-
-    if (isSubmitting) return;
-    isSubmitting = true;
-
-    const confirmBtn = document.getElementById('confirmOrderBtn');
-    const btnText = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-
-    confirmBtn.disabled = true;
-    btnText.style.display = 'none';
-    btnSpinner.style.display = 'block';
-
-    try {
-        const { subtotal, tax, total } = calculateTotals();
-
-        const orderData = {
-            table_number: parseInt(tableNumber),
-            items: cart.map(item => ({
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                size: item.size || null,
-                image: item.image_url
-            })),
-            subtotal: parseFloat(subtotal.toFixed(2)),
-            tax: parseFloat(tax.toFixed(2)),
-            total: parseFloat(total.toFixed(2)),
-            payment_method: 'PayHere',
-            payment_status: 'paid',
-            payment_details: {
-                gateway: 'PayHere',
-                type: 'Cards'
-            },
-            token: sessionToken
-        };
-
-        const response = await fetch(`${API_BASE_URL}/api/order`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(orderData)
-        });
-
-        const result = await response.json();
-        console.log('📥 Paid order response:', result);
-
-        if (response.ok && result.success) {
-            localStorage.removeItem('cart');
-
-            if (result.redirect_url) {
-                window.location.href = result.redirect_url;
-            } else {
-                window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${tableNumber}&token=${encodeURIComponent(sessionToken)}`;
-            }
-        } else if (response.status === 401) {
-            showSessionExpiredScreen();
-        } else {
-            throw new Error(result.error || 'Order save failed after payment');
-        }
-
-    } catch (error) {
-        console.error('❌ Error saving paid order:', error);
-        showErrorModal(error.message || 'Payment was successful, but order saving failed');
-
-        confirmBtn.disabled = false;
-        btnText.style.display = 'inline';
-        btnSpinner.style.display = 'none';
-        isSubmitting = false;
-    }
-}
 
 // =====================================================
 // ERROR MODAL
@@ -491,18 +416,46 @@ async function startCardGatewayOnly() {
         btnText.style.display = 'none';
         btnSpinner.style.display = 'block';
 
-        const { total } = calculateTotals();
+        const { subtotal, tax, total } = calculateTotals();
+
+        // ✅ Save order payload locally (NOT to backend yet)
+        const pendingPaidOrder = {
+            table_number: parseInt(tableNumber),
+            items: cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                size: item.size || null,
+                image: item.image_url
+            })),
+            subtotal: parseFloat(subtotal.toFixed(2)),
+            tax: parseFloat(tax.toFixed(2)),
+            total: parseFloat(total.toFixed(2)),
+            payment_method: 'PayHere',
+            payment_status: 'paid',
+            payment_details: {
+                gateway: 'PayHere',
+                type: 'Cards'
+            },
+            token: sessionToken
+        };
+
+        sessionStorage.setItem('pending_paid_order', JSON.stringify(pendingPaidOrder));
+
         const tempOrderId = `TEMP-${Date.now()}`;
 
         const payment = await createPayHereSession({
             order_id: tempOrderId,
             total: total,
-            table_number: parseInt(tableNumber)
+            table_number: parseInt(tableNumber),
+            token: sessionToken
         });
 
-        payhere.onCompleted = async function(orderId) {
-            console.log("✅ PayHere payment completed:", orderId);
-            await submitOrderAfterPayment();
+        // ✅ IMPORTANT: Do NOT save order here
+        payhere.onCompleted = function(orderId) {
+            console.log("✅ PayHere flow finished:", orderId);
+            // PayHere will return user to payment-result.html via return_url
         };
 
         payhere.onDismissed = function() {
@@ -556,6 +509,7 @@ async function createPayHereSession(orderData) {
             order_id: orderData.order_id,
             amount: orderData.total,
             table_number: orderData.table_number,
+            token: orderData.token || sessionToken,
             items_label: `Table ${orderData.table_number} Restaurant Order`
         })
     });
