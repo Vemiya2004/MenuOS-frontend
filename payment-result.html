@@ -1,25 +1,70 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Processing Payment...</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Processing Payment...</title>
 </head>
 <body>
 <script>
-const params = new URLSearchParams(window.location.search);
+(async function () {
+    const params = new URLSearchParams(window.location.search);
 
-// PayHere params
-const status = params.get("status_code");
-const orderId = params.get("order_id");
+    const statusCode = params.get("status_code");
+    const table = params.get("table") || "";
+    const token = params.get("token") || "";
 
-// 🧠 IMPORTANT: fallback check
-if (status === "2") {
-    // ✅ SUCCESS
-    window.location.href = `success.html?orderId=${orderId}`;
-} else {
-    // ❌ FAILED / DECLINED
-    alert("Payment Failed ❌");
-    window.location.href = "checkout.html";
-}
+    console.log("📥 Payment result params:", Object.fromEntries(params.entries()));
+
+    // ✅ Only approved payment should create order
+    if (statusCode !== "2") {
+        alert("Payment Failed ❌");
+        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+        return;
+    }
+
+    const rawOrder = sessionStorage.getItem("pending_paid_order");
+
+    if (!rawOrder) {
+        alert("Payment was completed, but order data is missing.");
+        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+        return;
+    }
+
+    try {
+        const orderData = JSON.parse(rawOrder);
+
+        const res = await fetch("https://menuos-backend.onrender.com/api/order", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(orderData)
+        });
+
+        const result = await res.json();
+        console.log("📥 Final paid order result:", result);
+
+        if (res.ok && result.success) {
+            localStorage.removeItem("cart");
+            sessionStorage.removeItem("pending_paid_order");
+
+            if (result.redirect_url) {
+                window.location.href = result.redirect_url;
+            } else {
+                window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+            }
+        } else {
+            throw new Error(result.error || "Failed to save paid order");
+        }
+
+    } catch (err) {
+        console.error("❌ Error saving approved order:", err);
+        alert("Payment completed, but order saving failed.");
+        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+    }
+})();
 </script>
 </body>
 </html>
