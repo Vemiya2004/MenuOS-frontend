@@ -17,7 +17,7 @@
     console.log("📥 Payment result params:", Object.fromEntries(params.entries()));
 
     // ✅ Only approved payment should create order
-    if (statusCode !== "2") {
+    if (!statusCode || statusCode !== "2") {
         alert("Payment Failed ❌");
         window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
         return;
