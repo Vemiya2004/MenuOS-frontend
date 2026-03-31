@@ -18,14 +18,9 @@
 
     // ✅ Only approved payment should create order
     if (!statusCode || statusCode !== "2") {
-        console.warn("❌ Payment declined or failed");
-
-        setTimeout(() => {
-            if (!document.body.dataset.finished) {
-                window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
-            }
-        }, 3000);
-
+        sessionStorage.removeItem("pending_paid_order");
+        sessionStorage.setItem("payment_failed_return", "1");
+        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
         return;
     }
 
