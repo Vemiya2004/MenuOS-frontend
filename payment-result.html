@@ -50,11 +50,10 @@
         attempts++;
     }
 
-    if (status !== "paid") {
+    if (!statusCode || statusCode !== "2") {
         sessionStorage.removeItem("pending_paid_order");
         sessionStorage.setItem("payment_failed_return", "1");
-        window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
-        return;
+        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}&v=${Date.now()}`;        return;
     }
 
     try {
