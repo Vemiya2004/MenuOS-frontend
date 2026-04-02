@@ -10,21 +10,13 @@
 (async function () {
     const params = new URLSearchParams(window.location.search);
 
-    const statusCode = params.get("status_code");
+    const tempOrderId = params.get("temp_order_id") || "";
     const table = params.get("table") || "";
     const token = params.get("token") || "";
 
-    setTimeout(() => {
-        if (sessionStorage.getItem("payment_failed_return") === "1") {
-            window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
-        }
-    }, 1200);    
-
     console.log("📥 Payment result params:", Object.fromEntries(params.entries()));
 
-    // ✅ Only approved payment should create order
-    if (!statusCode || statusCode !== "2") {
-        sessionStorage.removeItem("pending_paid_order");
+    if (!tempOrderId) {
         sessionStorage.setItem("payment_failed_return", "1");
         window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
         return;
@@ -33,7 +25,34 @@
     const rawOrder = sessionStorage.getItem("pending_paid_order");
 
     if (!rawOrder) {
-        alert("Payment was completed, but order data is missing.");
+        alert("Payment session expired. Please try again.");
+        sessionStorage.setItem("payment_failed_return", "1");
+        window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
+        return;
+    }
+
+    async function checkStatus() {
+        const res = await fetch(`https://menuos-backend.onrender.com/api/payhere/status/${encodeURIComponent(tempOrderId)}`);
+        const data = await res.json();
+        return data.status;
+    }
+
+    let attempts = 0;
+    let status = "pending";
+
+    while (attempts < 10) {
+        status = await checkStatus();
+        console.log("📡 PayHere backend status:", status);
+
+        if (status === "paid" || status === "failed") break;
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        attempts++;
+    }
+
+    if (status !== "paid") {
+        sessionStorage.removeItem("pending_paid_order");
+        sessionStorage.setItem("payment_failed_return", "1");
         window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
         return;
     }
@@ -69,6 +88,7 @@
     } catch (err) {
         console.error("❌ Error saving approved order:", err);
         alert("Payment completed, but order saving failed.");
+        sessionStorage.setItem("payment_failed_return", "1");
         window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
     }
 })();
