@@ -1,7 +1,7 @@
-// =====================================================
+// ==========================================================
 // MENU.JS - With Token Security System
 // ⭐ Validates token on page load, blocks expired sessions
-// =====================================================
+// ==========================================================
 
 const API_BASE_URL = 'https://menuos-backend.onrender.com';
 
