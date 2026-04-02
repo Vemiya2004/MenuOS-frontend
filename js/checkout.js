@@ -1,7 +1,7 @@
-// =====================================================
+// ======================================================
 // QR RESTAURANT ORDERING SYSTEM - CHECKOUT PAGE
 // ⭐ Token security: validates token & sends with order
-// =====================================================
+// ======================================================
 
 const API_BASE_URL = 'https://menuos-backend.onrender.com';
 
