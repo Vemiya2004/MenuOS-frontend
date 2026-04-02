@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setupEventListeners();
     createConfirmationModal();
+
     
     if (sessionStorage.getItem('payment_failed_return') === "1") {
         sessionStorage.removeItem('payment_failed_return');
@@ -184,8 +185,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     resetCheckoutButtonState();
 
+    resetCheckoutButtonState();
+
+    if (sessionStorage.getItem('payment_failed_return') === '1') {
+            sessionStorage.removeItem('payment_failed_return');
+            showToast('Payment declined. Please try again.', 'warning');
+        }
+
     console.log('✅ Checkout initialized');
 });
+
+window.addEventListener('pageshow', () => {
+    resetCheckoutButtonState();
+
+    if (sessionStorage.getItem('payment_failed_return') === '1') {
+        sessionStorage.removeItem('payment_failed_return');
+        showToast('Payment declined. Please try again.', 'warning');
+    }
+});
+
+window.addEventListener('focus', () => {
+    resetCheckoutButtonState();
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        resetCheckoutButtonState();
+    }
+});    
 
 // =====================================================
 // CART FUNCTIONS
@@ -345,11 +372,14 @@ async function submitOrder() {
             })),
             subtotal: parseFloat(subtotal.toFixed(2)),
             tax: parseFloat(tax.toFixed(2)),
-            total: parseFloat(total.toFixed(2)),
+            total: parseFloat(total.toFixed(2)), 
             payment_method: selectedPaymentGateway ? selectedPaymentGateway : paymentMethod,
             payment_status: 'pending',
             payment_details: collectPaymentDetails(),
-            token: sessionToken
+            payment_method: paymentMethod === 'pay-now' ? 'PayHere' : paymentMethod,
+            payment_status: 'pending',
+            payment_details: paymentMethod === 'pay-now' ? null : collectPaymentDetails(), 
+            token: 'sessionToken'
         };
 
         const response = await fetch(`${API_BASE_URL}/api/order`, {
@@ -574,6 +604,7 @@ async function createPayHereSession(orderData) {
     return result;
 }
 
+
 async function startPayHerePayment(orderResult, orderData) {
     const payment = await createPayHereSession({
         order_id: orderResult.order_id,
@@ -678,6 +709,10 @@ async function startPayHerePayment(orderResult, orderData) {
     payhere.startPayment(payment);
 }
 
+// =====================================================
+// PAYHERE
+// =====================================================
+
 function showPaymentGateway() {
     console.log('💳 Showing payment gateway');
     const modal = document.getElementById('paymentGatewayModal');
@@ -778,6 +813,7 @@ function resetPaymentGateway() {
 function clearAllPaymentForms() {
     document.querySelectorAll('.payment-form input').forEach(input => input.value = '');
 }
+
 
 function processPayment() {
     console.log(' Preparing PayHere payment...');
