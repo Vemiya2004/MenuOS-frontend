@@ -393,10 +393,10 @@ async function submitOrder() {
             })),
             subtotal: parseFloat(subtotal.toFixed(2)),
             tax: parseFloat(tax.toFixed(2)),
-            total: parseFloat(total.toFixed(2)), 
-            payment_method: paymentMethod === 'pay-now' ? 'PayHere' : paymentMethod,
-            payment_status: 'pending',
-            payment_details: paymentMethod === 'pay-now' ? null : collectPaymentDetails(), 
+            total: parseFloat(total.toFixed(2)),
+            payment_method: selectedPaymentGateway || paymentMethod,
+            payment_status: paymentMethod === 'pay-after' ? 'pending' : 'paid',
+            payment_details: collectPaymentDetails(),
             token: sessionToken
         };
 
@@ -422,7 +422,6 @@ async function submitOrder() {
             } else {
                 window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${tableNumber}&token=${encodeURIComponent(sessionToken)}`;
             }
-
         } else if (response.status === 401) {
             showSessionExpiredScreen();
         } else {
@@ -432,15 +431,7 @@ async function submitOrder() {
     } catch (error) {
         console.error('❌ Error:', error);
         showErrorModal(error.message || 'Error submitting order');
-
-        const confirmBtn = document.getElementById('confirmOrderBtn');
-        const btnText = document.getElementById('btnText');
-        const btnSpinner = document.getElementById('btnSpinner');
-
-        confirmBtn.disabled = false;
-        btnText.style.display = 'inline';
-        btnSpinner.style.display = 'none';
-        isSubmitting = false;
+        resetCheckoutButtonState();
     }
 }
 
