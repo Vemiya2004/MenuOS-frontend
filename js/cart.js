@@ -9,6 +9,10 @@ const urlParams = new URLSearchParams(window.location.search);
 const tableNumber = urlParams.get('table') || 1;
 const sessionToken = urlParams.get('token');  // ⭐ Token from URL
 
+function getCartKey() {
+    return `cart_table_${tableNumber}`;
+}
+
 console.log('🛒 Cart - Table Number:', tableNumber);
 console.log('🎫 Token:', sessionToken ? sessionToken.substring(0, 10) + '...' : 'NONE');
 
@@ -70,6 +74,9 @@ async function validateToken() {
 }
 
 function showSessionExpiredScreen() {
+
+    localStorage.removeItem(getCartKey());
+
     document.body.innerHTML = `
         <div style="
             display: flex; flex-direction: column;
@@ -138,13 +145,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 // =====================================================
 
 function loadCart() {
-    const savedCart = localStorage.getItem('cart');
+    const savedCart = localStorage.getItem(getCartKey());
     cart = savedCart ? JSON.parse(savedCart) : [];
-    console.log('✅ Cart loaded:', cart.length, 'unique items');
+    console.log('✅ Cart loaded ${tableNumber}:', cart.length, 'unique items');
 }
 
 function saveCart() {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem(getCartKey(), JSON.stringify(cart));
 }
 
 // =====================================================
