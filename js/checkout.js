@@ -140,7 +140,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadCart();
 
     if (cart.length === 0) {
-        window.location.href = `menu.html?table=${tableNumber}&token=${sessionToken}`;
+        console.warn('⚠️ Checkout cart is empty');
+        document.getElementById('orderSummary').innerHTML = `
+            <div style="padding:20px; text-align:center; color:#ef4444;">
+                No items found in cart.
+                <br><br>
+                <button onclick="window.location.href='menu.html?table=${tableNumber}&token=${sessionToken}'"
+                    style="padding:10px 18px; border:none; border-radius:8px; background:#111; color:#fff; cursor:pointer;">
+                    Back to Menu
+                </button>
+            </div>
+        `;
         return;
     }
 
