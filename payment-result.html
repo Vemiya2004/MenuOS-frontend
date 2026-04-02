@@ -14,13 +14,19 @@
     const table = params.get("table") || "";
     const token = params.get("token") || "";
 
+    setTimeout(() => {
+        if (sessionStorage.getItem("payment_failed_return") === "1") {
+            window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
+        }
+    }, 1200);    
+
     console.log("📥 Payment result params:", Object.fromEntries(params.entries()));
 
     // ✅ Only approved payment should create order
     if (!statusCode || statusCode !== "2") {
         sessionStorage.removeItem("pending_paid_order");
         sessionStorage.setItem("payment_failed_return", "1");
-        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+        window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
         return;
     }
 
@@ -28,7 +34,7 @@
 
     if (!rawOrder) {
         alert("Payment was completed, but order data is missing.");
-        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+        window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
         return;
     }
 
@@ -52,9 +58,9 @@
             sessionStorage.removeItem("pending_paid_order");
 
             if (result.redirect_url) {
-                window.location.href = result.redirect_url;
+                window.location.replace(result.redirect_url);
             } else {
-                window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+                window.location.replace(`success.html?orderId=${encodeURIComponent(result.order_id)}&table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
             }
         } else {
             throw new Error(result.error || "Failed to save paid order");
@@ -63,7 +69,7 @@
     } catch (err) {
         console.error("❌ Error saving approved order:", err);
         alert("Payment completed, but order saving failed.");
-        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+        window.location.replace(`checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`);
     }
 })();
 </script>
