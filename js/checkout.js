@@ -334,15 +334,6 @@ function createConfirmationModal() {
     document.head.appendChild(style);
 }
 
-function showPaymentGateway() {
-    console.log('💳 Showing payment gateway');
-    const modal = document.getElementById('paymentGatewayModal');
-    const { total } = calculateTotals();
-    document.getElementById('detailsAmount').textContent = `Total: LKR ${total.toFixed(2)}`;
-    modal.classList.add('active');
-    setupPaymentMethodSelection();
-}
-
 function showConfirmModal() {
     const modal = document.getElementById('confirmModal');
     const { total } = calculateTotals();
@@ -504,6 +495,15 @@ function setupEventListeners() {
 // =====================================================
 
 let selectedPaymentGateway = null;
+
+function showPaymentGateway() {
+    console.log('💳 Showing payment gateway');
+    const modal = document.getElementById('paymentGatewayModal');
+    const { total } = calculateTotals();
+    document.getElementById('detailsAmount').textContent = `Total: LKR ${total.toFixed(2)}`;
+    modal.classList.add('active');
+    setupPaymentMethodSelection();
+}
 
 async function startCardGatewayOnly() {
     try {
