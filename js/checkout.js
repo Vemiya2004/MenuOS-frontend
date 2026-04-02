@@ -505,6 +505,31 @@ function showPaymentGateway() {
     setupPaymentMethodSelection();
 }
 
+async function createPayHereSession(orderData) {
+    const res = await fetch(`${API_BASE_URL}/api/payhere/session`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            order_id: orderData.order_id,
+            amount: orderData.total,
+            table_number: orderData.table_number,
+            token: orderData.token || sessionToken,
+            items_label: `Table ${orderData.table_number} Restaurant Order`
+        })
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+        throw new Error(result.error || 'Failed to create PayHere session');
+    }
+
+    return result;
+}
+
 async function startCardGatewayOnly() {
     try {
         const confirmBtn = document.getElementById('confirmOrderBtn');
