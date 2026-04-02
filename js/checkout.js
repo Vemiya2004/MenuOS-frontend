@@ -569,44 +569,6 @@ async function startCardGatewayOnly() {
     }
 }
 
-async function createPayHereSession(orderData) {
-    const res = await fetch(`${API_BASE_URL}/api/payhere/session`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-            order_id: orderData.order_id,
-            amount: orderData.total,
-            table_number: orderData.table_number,
-            token: orderData.token || sessionToken,
-            items_label: `Table ${orderData.table_number} Restaurant Order`
-        })
-    });
-
-    const result = await res.json();
-
-    if (!res.ok) {
-        throw new Error(result.error || 'Failed to create PayHere session');
-    }
-
-    return result;
-}
-
-// =====================================================
-// PAYHERE
-// =====================================================
-
-function showPaymentGateway() {
-    console.log('💳 Showing payment gateway');
-    const modal = document.getElementById('paymentGatewayModal');
-    const { total } = calculateTotals();
-    document.getElementById('detailsAmount').textContent = `Total: LKR ${total.toFixed(2)}`;
-    modal.classList.add('active');
-    setupPaymentMethodSelection();
-}
-
 function setupPaymentMethodSelection() {
     const options = document.querySelectorAll('.payment-method-option');
 
@@ -616,14 +578,12 @@ function setupPaymentMethodSelection() {
             option.classList.add('selected');
             selectedPaymentGateway = option.dataset.method;
 
-            // ✅ Cards -> direct PayHere only
             if (selectedPaymentGateway === 'card') {
                 document.getElementById('paymentGatewayModal').classList.remove('active');
                 startCardGatewayOnly();
                 return;
             }
 
-            // ✅ Other methods -> custom details screen
             document.getElementById('paymentMethodStep').classList.remove('active');
             document.getElementById('paymentMethodStep').style.display = 'none';
             document.getElementById('paymentDetailsStep').classList.add('active');
@@ -655,17 +615,8 @@ function setupPaymentMethodSelection() {
             e.stopPropagation();
             document.getElementById('paymentGatewayModal').classList.remove('active');
             resetPaymentGateway();
+            resetCheckoutButtonState();
             showToast('Payment Cancelled!', 'warning');
-
-            const confirmBtn = document.getElementById('confirmOrderBtn');
-            const btnText = document.getElementById('btnText');
-            const btnSpinner = document.getElementById('btnSpinner');
-
-            if (confirmBtn) confirmBtn.disabled = false;
-            if (btnText) btnText.style.display = 'inline';
-            if (btnSpinner) btnSpinner.style.display = 'none';
-
-            isSubmitting = false;
         };
     }
 
@@ -678,8 +629,6 @@ function setupPaymentMethodSelection() {
             if (!selectedPaymentGateway) return;
 
             document.getElementById('paymentGatewayModal').classList.remove('active');
-
-            // other custom methods only
             await submitOrder();
         };
     }
