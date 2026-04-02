@@ -349,14 +349,6 @@
             }
         }, 1200);
 
-        fetch(`https://menuos-backend.onrender.com/api/order/${orderId}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.payment_status !== "paid") {
-                    alert("Invalid access ❌");
-                    window.location.href = "checkout.html";
-                }
-            });
     </script>
 </body>
 </html>
