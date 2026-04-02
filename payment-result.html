@@ -7,7 +7,6 @@
 </head>
 <body>
 <script>
-console.log("New payment-result.html loaded"); 
 (async function () {
     const params = new URLSearchParams(window.location.search);
 
@@ -74,7 +73,7 @@ console.log("New payment-result.html loaded");
         console.log("📥 Final paid order result:", result);
 
         if (res.ok && result.success) {
-            localStorage.removeItem("cart");
+            localStorage.removeItem(getCartKey());
             sessionStorage.removeItem("pending_paid_order");
 
             if (result.redirect_url) {
