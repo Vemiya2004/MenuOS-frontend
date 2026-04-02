@@ -505,10 +505,10 @@ async function startCardGatewayOnly() {
         confirmBtn.disabled = true;
         btnText.style.display = 'none';
         btnSpinner.style.display = 'block';
+        isSubmitting = true;
 
         const { subtotal, tax, total } = calculateTotals();
 
-        // ✅ Save order payload locally (NOT to backend yet)
         const pendingPaidOrder = {
             table_number: parseInt(tableNumber),
             items: cart.map(item => ({
@@ -542,31 +542,21 @@ async function startCardGatewayOnly() {
             token: sessionToken
         });
 
-        // ✅ IMPORTANT: Do NOT save order here
         payhere.onCompleted = function(orderId) {
             console.log("✅ PayHere flow finished:", orderId);
-            // PayHere will return user to payment-result.html via return_url
+            window.location.href = `payment-result.html?temp_order_id=${encodeURIComponent(tempOrderId)}&table=${encodeURIComponent(tableNumber)}&token=${encodeURIComponent(sessionToken)}&v=${Date.now()}`;
         };
 
         payhere.onDismissed = function() {
             console.warn("⚠️ PayHere popup dismissed");
-
-            confirmBtn.disabled = false;
-            btnText.style.display = 'inline';
-            btnSpinner.style.display = 'none';
-            isSubmitting = false;
-
-            showToast('Payment cancelled', 'warning');
+            sessionStorage.setItem('payment_failed_return', '1');
+            resetCheckoutButtonState();
         };
 
         payhere.onError = function(error) {
             console.error("❌ PayHere error:", error);
-
-            confirmBtn.disabled = false;
-            btnText.style.display = 'inline';
-            btnSpinner.style.display = 'none';
-            isSubmitting = false;
-
+            sessionStorage.setItem('payment_failed_return', '1');
+            resetCheckoutButtonState();
             showErrorModal(typeof error === 'string' ? error : 'Payment gateway error');
         };
 
@@ -574,16 +564,7 @@ async function startCardGatewayOnly() {
 
     } catch (error) {
         console.error("❌ Failed to start card gateway:", error);
-
-        const confirmBtn = document.getElementById('confirmOrderBtn');
-        const btnText = document.getElementById('btnText');
-        const btnSpinner = document.getElementById('btnSpinner');
-
-        confirmBtn.disabled = false;
-        btnText.style.display = 'inline';
-        btnSpinner.style.display = 'none';
-        isSubmitting = false;
-
+        resetCheckoutButtonState();
         showErrorModal(error.message || 'Failed to start payment');
     }
 }
