@@ -9,6 +9,10 @@ const urlParams = new URLSearchParams(window.location.search);
 const tableNumber = urlParams.get('table') || 1;
 const sessionToken = urlParams.get('token');  // ⭐ Token from URL
 
+function getCartKey () {
+    return `cart_table_${tableNumber}`;
+}
+
 console.log('💳 Checkout - Table Number:', tableNumber);
 console.log('🎫 Token:', sessionToken ? sessionToken.substring(0, 10) + '...' : 'NONE');
 
@@ -57,6 +61,9 @@ async function validateToken() {
 }
 
 function showSessionExpiredScreen() {
+
+    localStorage.removeItem(getCartKey());
+
     document.body.innerHTML = `
         <div style="
             display: flex; flex-direction: column;
@@ -373,13 +380,10 @@ async function submitOrder() {
             subtotal: parseFloat(subtotal.toFixed(2)),
             tax: parseFloat(tax.toFixed(2)),
             total: parseFloat(total.toFixed(2)), 
-            payment_method: selectedPaymentGateway ? selectedPaymentGateway : paymentMethod,
-            payment_status: 'pending',
-            payment_details: collectPaymentDetails(),
             payment_method: paymentMethod === 'pay-now' ? 'PayHere' : paymentMethod,
             payment_status: 'pending',
             payment_details: paymentMethod === 'pay-now' ? null : collectPaymentDetails(), 
-            token: 'sessionToken'
+            token: sessionToken
         };
 
         const response = await fetch(`${API_BASE_URL}/api/order`, {
@@ -397,7 +401,7 @@ async function submitOrder() {
         if (response.ok && result.success) {
             console.log('✅ Order created:', result.order_id);
 
-            localStorage.removeItem('cart');
+            localStorage.removeItem(getCartKey());
 
             if (result.redirect_url) {
                 window.location.href = result.redirect_url;
@@ -615,7 +619,7 @@ async function startPayHerePayment(orderResult, orderData) {
     payhere.onCompleted = function(orderId) {
         console.log("✅ PayHere payment completed:", orderId);
 
-        localStorage.removeItem('cart');
+        localStorage.removeItem(getCartKey());
 
         setTimeout(() => {
             window.location.href = `payment-result.html?orderId=${encodeURIComponent(orderResult.order_id)}&table=${tableNumber}&token=${encodeURIComponent(sessionToken)}`;
@@ -667,7 +671,7 @@ async function startPayHerePayment(orderResult, orderData) {
 
     payhere.onCompleted = function(orderId) {
         console.log("✅ PayHere payment completed:", orderId);
-        localStorage.removeItem('cart');
+        localStorage.removeItem(getCartKey());
 
         if (orderResult.redirect_url) {
             window.location.href = orderResult.redirect_url;
