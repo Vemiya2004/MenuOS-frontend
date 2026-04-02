@@ -9,6 +9,10 @@ const urlParams = new URLSearchParams(window.location.search);
 const tableNumber = urlParams.get('table') || 1;
 const sessionToken = urlParams.get('token');  // ⭐ Token from URL
 
+function getCartKey() {
+    return `cart_table_${tableNumber}`;
+}
+
 console.log('🍽️ Table Number:', tableNumber);
 console.log('🎫 Token:', sessionToken ? sessionToken.substring(0, 10) + '...' : 'NONE');
 
@@ -82,6 +86,8 @@ async function validateToken() {
 }
 
 function showSessionExpiredScreen(reason) {
+
+    localStorage.removeItem(getCartKey());
     // Hide everything
     document.body.innerHTML = `
         <div style="
@@ -473,12 +479,12 @@ function addToCart() {
 }
 
 function loadCart() {
-    const saved = localStorage.getItem('cart');
+    const saved = localStorage.getItem(getCartKey());
     cart = saved ? JSON.parse(saved) : [];
 }
 
 function saveCart() {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem(getCartKey(), JSON.stringify(cart));
 }
 
 function updateCartBadge() {
