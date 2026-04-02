@@ -226,11 +226,13 @@ document.addEventListener('visibilitychange', () => {
 // =====================================================
 
 function loadCart() {
-    const savedCart = localStorage.getItem(getCartKey);
-    cart = savedCart ? JSON.parse(savedCart) : [];
-    console.log('📦 Cart loaded:', cart.length, 'items');
     console.log('🔑 Checkout cart key =', getCartKey());
     console.log('🛒 Checkout raw cart =', localStorage.getItem(getCartKey()));
+
+    const savedCart = localStorage.getItem(getCartKey());
+    cart = savedCart ? JSON.parse(savedCart) : [];
+
+    console.log(`📦 Cart loaded for table ${tableNumber}:`, cart.length, 'items');
 }
 
 function calculateTotals() {
