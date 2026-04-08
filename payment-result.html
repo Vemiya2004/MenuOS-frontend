@@ -48,6 +48,9 @@
         }
 
         const orderData = JSON.parse(rawOrder);
+        orderData.payment_status = 'paid';
+        orderData.payment_method ='PayHere';
+        orderData.payment_details = { gateway:'PayHere', type: 'Cards' };
 
         const res = await fetch("https://menuos-backend.onrender.com/api/order", {
             method: "POST",
