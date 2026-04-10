@@ -352,7 +352,7 @@ if (item.has_sizes && item.sizes && item.sizes.length > 0) {
 
         return `
         <div class="menu-item" data-id="${item.id}">
-            <div class="menu-item-image">
+            <div class="menu-item-image" style="position:relative;">
                 <img src="${imgUrl}" alt="${item.name}"
                      onerror="this.onerror=null; this.src='${placeholder}';">
             </div>
