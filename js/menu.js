@@ -450,9 +450,23 @@ function showItemModal(itemId) {
         addBtn.disabled = true;
         addBtn.style.opacity = '0.5';
     } else {
-        priceDiv.innerHTML = `<p style="font-size: 28px; color: #2D7A7C; font-weight: bold;">LKR ${selectedItem.price || 0}</p>`;
-        addBtn.disabled = false;
-        addBtn.style.opacity = '1';
+        if (selectedItem.has_offer) {
+            priceDiv.innerHTML = `
+                <p style="font-size: 16px; color: #999; text-decoration: line-through; margin-bottom: 6px;">
+                    LKR ${selectedItem.original_price || selectedItem.price || 0}
+                </p>
+                <p style="font-size: 28px; color: #2D7A7C; font-weight: bold;">
+                    LKR ${selectedItem.price || 0}
+                </p>
+                <p style="font-size: 14px; color: #ef4444; font-weight: bold;">
+                    ${selectedItem.discount_percent}% OFF
+                </p>
+            `;
+            } else {
+                priceDiv.innerHTML = `<p style="font-size: 28px; color: #2D7A7C; font-weight: bold;">LKR ${selectedItem.price || 0}</p>`;
+            }
+            addBtn.disabled = false;
+            addBtn.style.opacity = '1';
     }
 
     document.getElementById('itemModal').classList.add('active');
