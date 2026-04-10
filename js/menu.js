@@ -362,8 +362,31 @@ if (item.has_sizes && item.sizes && item.sizes.length > 0) {
                     <span class="info-item">⏱️ ${item.prep_time} min</span>
                     <span class="info-item">⭐ ${item.rating}</span>
                 </div>
-                <p class="menu-item-price">${priceText}</p>
-                ${item.has_sizes ? '<p style="font-size:12px; color:#999;">📏 Multiple sizes</p>' : ''}
+                ${item.has_offer ? `
+    <div style="
+        position:absolute;
+        top:10px;
+        left:10px;
+        background:#ef4444;
+        color:white;
+        font-size:12px;
+        font-weight:bold;
+        padding:4px 8px;
+        border-radius:999px;
+        z-index:2;
+    ">
+        ${item.discount_percent}% OFF
+    </div>
+` : ''}
+
+${item.has_offer ? `
+    <p style="font-size:14px; color:#999; text-decoration:line-through; margin:0 0 4px 0;">
+        ${oldPriceText}
+    </p>
+` : ''}
+
+<p class="menu-item-price">${priceText}</p>
+${item.has_sizes ? '<p style="font-size:12px; color:#999;">📏 Multiple sizes</p>' : ''}
             </div>
         </div>
         `;
