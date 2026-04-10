@@ -350,47 +350,65 @@ if (item.has_sizes && item.sizes && item.sizes.length > 0) {
 }
         
 
-        return `
-        <div class="menu-item" data-id="${item.id}">
-            <div class="menu-item-image" style="position:relative;">
-                <img src="${imgUrl}" alt="${item.name}"
-                     onerror="this.onerror=null; this.src='${placeholder}';">
-            </div>
-            <div class="menu-item-content">
-                <h3 class="menu-item-name">${item.name}</h3>
-                <div class="menu-item-info">
-                    <span class="info-item">⏱️ ${item.prep_time} min</span>
-                    <span class="info-item">⭐ ${item.rating}</span>
-                </div>
+            return `
+            <div class="menu-item" data-id="${item.id}" style="position:relative; overflow:hidden;">
                 ${item.has_offer ? `
-    <div style="
-        position:absolute;
-        top:10px;
-        left:10px;
-        background:#ef4444;
-        color:white;
-        font-size:12px;
-        font-weight:bold;
-        padding:4px 8px;
-        border-radius:999px;
-        z-index:2;
-    ">
-        ${item.discount_percent}% OFF
-    </div>
-` : ''}
+                    <div class="offer-badge" style="
+                        position:absolute;
+                        top:10px;
+                        left:10px;
+                        background:#ef4444;
+                        color:#fff;
+                        font-size:12px;
+                        font-weight:700;
+                        padding:6px 10px;
+                        border-radius:999px;
+                        z-index:20;
+                        box-shadow:0 2px 8px rgba(0,0,0,0.25);
+                    ">
+                        ${item.discount_percent}% OFF
+                    </div>
+                ` : ''}
 
-${item.has_offer ? `
-    <p style="font-size:14px; color:#999; text-decoration:line-through; margin:0 0 4px 0;">
-        ${oldPriceText}
-    </p>
-` : ''}
+                <div class="menu-item-image" style="position:relative;">
+                    <img src="${imgUrl}" alt="${item.name}"
+                        onerror="this.onerror=null; this.src='${placeholder}';">
+                </div>
+                <div class="menu-item-content">
+                    <h3 class="menu-item-name">${item.name}</h3>
+                    <div class="menu-item-info">
+                        <span class="info-item">⏱️ ${item.prep_time} min</span>
+                        <span class="info-item">⭐ ${item.rating}</span>
+                    </div>   
+                        ${item.has_offer ? `
+                        <div style="
+                            position:absolute;
+                            top:10px;
+                            left:10px;
+                            background:#ef4444;
+                            color:white;
+                            font-size:12px;
+                            font-weight:bold;
+                            padding:4px 8px;
+                            border-radius:999px;
+                            z-index:2;
+                        ">
+                            ${item.discount_percent}% OFF
+                        </div>
+                        ` : ''}
 
-<p class="menu-item-price">${priceText}</p>
-${item.has_sizes ? '<p style="font-size:12px; color:#999;">📏 Multiple sizes</p>' : ''}
+                        ${item.has_offer ? `
+                            <p style="font-size:14px; color:#999; text-decoration:line-through; margin:0 0 4px 0;">
+                                ${oldPriceText}
+                            </p>
+                        ` : ''}
+
+                        <p class="menu-item-price">${priceText}</p>
+                        ${item.has_sizes ? '<p style="font-size:12px; color:#999;">📏 Multiple sizes</p>' : ''}
+                </div>
             </div>
-        </div>
-        `;
-    }).join('');
+                `;
+                }).join('');
 
     document.querySelectorAll('.menu-item').forEach(el => {
         el.addEventListener('click', () => {
