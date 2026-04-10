@@ -495,11 +495,16 @@ function addToCart() {
         return;
     }
 
-    const item = {
+        const item = {
         id: selectedItem.id,
         name: selectedItem.name,
         description: selectedItem.description,
         price: selectedItem.has_sizes ? selectedSize.price : selectedItem.price,
+        original_price: selectedItem.has_sizes
+            ? (selectedSize.original_price || selectedSize.price)
+            : (selectedItem.original_price || selectedItem.price),
+        discount_percent: selectedItem.discount_percent || 0,
+        has_offer: selectedItem.has_offer || false,
         size: selectedItem.has_sizes ? selectedSize.name : null,
         image_url: selectedItem.image_url,
         category: selectedItem.category,
