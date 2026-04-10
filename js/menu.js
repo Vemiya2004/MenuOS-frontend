@@ -227,27 +227,31 @@ async function loadMenu(category = 'All') {
         console.log('📦 Raw items received:', items.length);
 
         menuItems = items.map(item => {
-            let sizes = null;
-            if (item.has_sizes && item.sizes) {
-                try {
-                    sizes = typeof item.sizes === 'string' ? JSON.parse(item.sizes) : item.sizes;
-                } catch (e) {
-                    console.warn('⚠️ Size parse error:', item.name);
-                }
-            }
-            return {
-                id: item.id,
-                name: item.name,
-                description: item.description || '',
-                price: item.base_price,
-                image_url: item.image_url,
-                prep_time: item.prep_time || 15,
-                rating: item.rating || 4.5,
-                category: item.category,
-                has_sizes: item.has_sizes,
-                sizes: sizes
-            };
-        });
+    let sizes = null;
+    if (item.has_sizes && item.sizes) {
+        try {
+            sizes = typeof item.sizes === 'string' ? JSON.parse(item.sizes) : item.sizes;
+        } catch (e) {
+            console.warn('⚠️ Size parse error:', item.name);
+        }
+    }
+
+    return {
+        id: item.id,
+        name: item.name,
+        description: item.description || '',
+        price: item.discounted_base_price ?? item.base_price,
+        original_price: item.original_base_price ?? item.base_price,
+        has_offer: item.has_offer || false,
+        discount_percent: item.discount_percent || 0,
+        image_url: item.image_url,
+        prep_time: item.prep_time || 15,
+        rating: item.rating || 4.5,
+        category: item.category,
+        has_sizes: item.has_sizes,
+        sizes: sizes
+    };
+});
 
         console.log('✅ Menu items transformed:', menuItems.length);
 
