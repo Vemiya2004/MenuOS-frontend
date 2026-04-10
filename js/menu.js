@@ -325,14 +325,30 @@ function renderMenuItems() {
         const placeholder = `${API_BASE_URL}/uploads/placeholder.jpg`;
 
         let priceText;
-        if (item.has_sizes && item.sizes && item.sizes.length > 0) {
-            const prices = item.sizes.map(s => s.price);
-            const min = Math.min(...prices);
-            const max = Math.max(...prices);
-            priceText = min === max ? `LKR ${min}` : `LKR ${min} - ${max}`;
-        } else {
-            priceText = `LKR ${item.price || 0}`;
-        }
+let oldPriceText = '';
+
+if (item.has_sizes && item.sizes && item.sizes.length > 0) {
+    const prices = item.sizes.map(s => Number(s.price));
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+
+    priceText = min === max ? `LKR ${min}` : `LKR ${min} - ${max}`;
+
+    if (item.has_offer) {
+        const originalPrices = item.sizes.map(s => Number(s.original_price || s.price));
+        const originalMin = Math.min(...originalPrices);
+        const originalMax = Math.max(...originalPrices);
+        oldPriceText = originalMin === originalMax
+            ? `LKR ${originalMin}`
+            : `LKR ${originalMin} - ${originalMax}`;
+    }
+} else {
+    priceText = `LKR ${item.price || 0}`;
+    if (item.has_offer) {
+        oldPriceText = `LKR ${item.original_price || item.price || 0}`;
+    }
+}
+        
 
         return `
         <div class="menu-item" data-id="${item.id}">
