@@ -413,15 +413,14 @@ async function submitOrder() {
         console.log('📥 Response:', result);
 
         if (response.ok && result.success) {
-            console.log('✅ Order created:', result.order_id);
+            console.log('✅ Order submitted:', result.order_id);
 
             localStorage.removeItem(getCartKey());
 
-            if (result.redirect_url) {
-                window.location.href = result.redirect_url;
-            } else {
-                window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${tableNumber}&token=${encodeURIComponent(sessionToken)}`;
-            }
+            const ticketCode = result.ticket_code;
+            const orderId = result.order_id;
+
+            window.location.href = `waiting-approval.html?ticket_code=${encodeURIComponent(ticketCode)}&order_id=${encodeURIComponent(orderId)}&table=${encodeURIComponent(tableNumber)}&token=${encodeURIComponent(sessionToken)}`;
         } else if (response.status === 401) {
             showSessionExpiredScreen();
         } else {
