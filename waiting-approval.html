@@ -82,7 +82,7 @@
                     <path d="M8 10L12 13M12 13L16 10M12 13L12 3" stroke="#222222" stroke-width="2"/>
             </span>
         </div>
-        
+
         <h1>Please wait</h1>
         <p>Please wait a moment.Wait for the waiter to approve......</p>
         <div id="ticketCodeBox" class="ticket">Loading...</div>
@@ -101,13 +101,10 @@
             if (!ticketCode) return;
 
             try {
-                const res = await fetch(`${API_BASE_URL}/admin/api/waiter-tickets?status=all`);
-                const tickets = await res.json();
+                const res = await fetch(`${API_BASE_URL}/admin/public/waiter-ticket-status/${encodeURIComponent(ticketCode)}`);
+                const ticket = await res.json();
 
-                if (!Array.isArray(tickets)) return;
-
-                const ticket = tickets.find(t => t.ticket_code === ticketCode);
-                if (!ticket) return;
+                if (!res.ok) return;
 
                 if (ticket.waiter_status === 'approved') {
                     window.location.href = `success.html?orderId=${encodeURIComponent(orderId || '')}`;
