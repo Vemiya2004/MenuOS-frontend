@@ -226,8 +226,6 @@
         sessionStorage.removeItem('redirecting');
         
         // Get order details from URL
-        const params = new URLSearchParams(window.location.search);
-        const orderId = params.get('orderId');
         const tableNumber = params.get('table');
         const receiptUrl = params.get('receipt');
         const summaryData = params.get('summary');
@@ -291,13 +289,25 @@
         // Back to menu button
         document.getElementById('menuBtn').onclick = () => {
             // Clear cart and go to menu
-            localStorage.removeItem('cart');
+            localStorage.removeItem(getCartKey());
             localStorage.removeItem('paymentMethod');
 
             if (token) {
                 window.location.href = `menu.html?table=${tableNumber || 1}&token=${encodeURIComponent(token || '')}`;
             }  else {
-                window.location.href = `menu.html?table=${tableNumber || 1}`;
+                const params = new URLSearchParams(window.location.search);
+                const tableNumber = params.get('table');
+                const token = params.get('token');
+
+                document.getElementById('backToMenuBtn').addEventListener('click', () => {
+                    if (tableNumber && token) {
+                        window.location.href = `menu.html?table=${encodeURIComponent(tableNumber)}&token=${encodeURIComponent(token)}`;
+                    } else if (tableNumber) {
+                        window.location.href = `index.html?table=${encodeURIComponent(tableNumber)}`;
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                });
             }    
         };
         
