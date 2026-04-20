@@ -107,7 +107,14 @@
                 if (!res.ok) return;
 
                 if (ticket.waiter_status === 'approved') {
-                    window.location.href = `success.html?orderId=${encodeURIComponent(orderId || '')}`;
+                    const params = new URLSearchParams(window.location.search);
+                    const tableNumber = params.get('table');
+                    const token = params.get('token');
+
+                    window.location.href =
+                        `success.html?orderId=${encodeURIComponent(orderId || '')}` +
+                        `&table=${encodeURIComponent(tableNumber || '')}` +
+                        `&token=${encodeURIComponent(token || '')}`;
                 }
             } catch (e) {
                 console.error('Approval check failed:', e);
