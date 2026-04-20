@@ -221,145 +221,159 @@
     </div>
 
     <script>
-        // ⭐ Clear session flags immediately
-        sessionStorage.removeItem('orderSuccessful');
-        sessionStorage.removeItem('redirecting');
-        
-        // Get order details from URL
-        const params = new URLSearchParams(window.location.search);
-        const tableNumber = params.get('table');
-        const receiptUrl = params.get('receipt');
-        const summaryData = params.get('summary');
-        const token = params.get('token');
-        
-        console.log('🎉 SUCCESS PAGE LOADED');
-        console.log('Order ID:', orderId);
-        console.log('Table:', tableNumber);
-        console.log('Receipt:', receiptUrl);
-        
-        // Display order ID
-        if (orderId && orderId !== 'null' && orderId !== '') {
-            document.getElementById('orderId').textContent = orderId;
-        } else {
-            document.getElementById('orderId').textContent = 'Processing...';
-        }
-        
-        // Display order summary if available
-        if (summaryData) {
-            try {
-                const summary = JSON.parse(atob(summaryData));
-                console.log('Order Summary:', summary);
-                
-                // Show summary section
-                document.getElementById('orderSummarySection').style.display = 'block';
-                
-                // Display items
-                const orderItemsDiv = document.getElementById('orderItems');
+    // Clear temporary session flags
+    sessionStorage.removeItem('orderSuccessful');
+    sessionStorage.removeItem('redirecting');
+
+    // Read URL params
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId') || '';
+    const tableNumber = params.get('table') || '';
+    const token = params.get('token') || '';
+    const receiptUrl = params.get('receipt') || '';
+    const summaryData = params.get('summary') || '';
+
+    function getCartKey(tableNo) {
+        return `cart_table_${tableNo}`;
+    }
+
+    console.log('🎉 SUCCESS PAGE LOADED');
+    console.log('Order ID:', orderId);
+    console.log('Table:', tableNumber);
+    console.log('Receipt:', receiptUrl);
+    console.log('Token exists:', !!token);
+
+    // Display order ID
+    const orderIdEl = document.getElementById('orderId');
+    if (orderIdEl) {
+        orderIdEl.textContent = orderId && orderId !== 'null' ? orderId : 'Processing...';
+    }
+
+    // Display order summary if available
+    if (summaryData) {
+        try {
+            const summary = JSON.parse(atob(summaryData));
+            console.log('Order Summary:', summary);
+
+            const summarySection = document.getElementById('orderSummarySection');
+            const orderItemsDiv = document.getElementById('orderItems');
+            const subtotalEl = document.getElementById('summarySubtotal');
+            const taxEl = document.getElementById('summaryTax');
+            const totalEl = document.getElementById('summaryTotal');
+
+            if (summarySection) summarySection.style.display = 'block';
+
+            if (orderItemsDiv && Array.isArray(summary.items)) {
                 orderItemsDiv.innerHTML = summary.items.map(item => {
                     const displayName = item.size ? `${item.name} (${item.size})` : item.name;
+                    const qty = item.quantity || 1;
+                    const lineTotal = (Number(item.price || 0) * qty).toFixed(2);
+
                     return `
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
-                            <span style="color: #374151;">${item.quantity} x ${displayName}</span>
-                            <span style="color: #1f2937; font-weight: 500;">LKR ${(item.price * item.quantity).toFixed(2)}</span>
+                            <span style="color: #374151;">${qty} x ${displayName}</span>
+                            <span style="color: #1f2937; font-weight: 500;">LKR ${lineTotal}</span>
                         </div>
                     `;
                 }).join('');
-                
-                // Display totals
-                document.getElementById('summarySubtotal').textContent = `LKR ${summary.subtotal.toFixed(2)}`;
-                document.getElementById('summaryTax').textContent = `LKR ${summary.tax.toFixed(2)}`;
-                document.getElementById('summaryTotal').textContent = `LKR ${summary.total.toFixed(2)}`;
-                
-            } catch (error) {
-                console.error('Error parsing summary:', error);
             }
+
+            if (subtotalEl) subtotalEl.textContent = `LKR ${Number(summary.subtotal || 0).toFixed(2)}`;
+            if (taxEl) taxEl.textContent = `LKR ${Number(summary.tax || 0).toFixed(2)}`;
+            if (totalEl) totalEl.textContent = `LKR ${Number(summary.total || 0).toFixed(2)}`;
+        } catch (error) {
+            console.error('Error parsing summary:', error);
         }
-        
-        // Show receipt button if URL exists
-        if (receiptUrl && receiptUrl !== 'null' && receiptUrl !== '') {
-            const receiptBtn = document.getElementById('receiptBtn');
-            receiptBtn.style.display = 'block';
-            receiptBtn.onclick = () => {
-                const fullReceiptUrl = receiptUrl.startsWith('http') 
-                    ? receiptUrl 
-                    : 'https://menuos-backend.onrender.com' + receiptUrl;
-                window.open(fullReceiptUrl, '_blank');
-            };
-        }
-        
-        // Back to menu button
-        document.getElementById('menuBtn').onclick = () => {
-            // Clear cart and go to menu
-            localStorage.removeItem(getCartKey());
+    }
+
+    // Receipt button
+    const receiptBtn = document.getElementById('receiptBtn');
+    if (receiptBtn) {
+        receiptBtn.onclick = () => {
+            let finalReceiptUrl = '';
+
+            if (receiptUrl && receiptUrl !== 'null') {
+                finalReceiptUrl = receiptUrl.startsWith('http')
+                    ? receiptUrl
+                    : `https://menuos-backend.onrender.com${receiptUrl}`;
+            } else if (orderId) {
+                finalReceiptUrl = `https://menuos-backend.onrender.com/receipts/html/${encodeURIComponent(orderId)}.html`;
+            }
+
+            if (finalReceiptUrl) {
+                window.open(finalReceiptUrl, '_blank');
+            } else {
+                alert('Receipt not available yet');
+            }
+        };
+    }
+
+    // Back to Menu button
+    const menuBtn = document.getElementById('menuBtn');
+    if (menuBtn) {
+        menuBtn.onclick = () => {
+            if (tableNumber) {
+                localStorage.removeItem(getCartKey(tableNumber));
+            }
             localStorage.removeItem('paymentMethod');
 
-            if (token) {
-                window.location.href = `menu.html?table=${tableNumber || 1}&token=${encodeURIComponent(token || '')}`;
-            }  else {
-                const params = new URLSearchParams(window.location.search);
-                const tableNumber = params.get('table');
-                const token = params.get('token');
-
-                document.getElementById('backToMenuBtn').addEventListener('click', () => {
-                    if (tableNumber && token) {
-                        window.location.href = `menu.html?table=${encodeURIComponent(tableNumber)}&token=${encodeURIComponent(token)}`;
-                    } else if (tableNumber) {
-                        window.location.href = `index.html?table=${encodeURIComponent(tableNumber)}`;
-                    } else {
-                        window.location.href = 'index.html';
-                    }
-                });
-            }    
+            if (tableNumber && token) {
+                window.location.href = `menu.html?table=${encodeURIComponent(tableNumber)}&token=${encodeURIComponent(token)}`;
+            } else if (tableNumber) {
+                window.location.href = `index.html?table=${encodeURIComponent(tableNumber)}`;
+            } else {
+                window.location.href = 'index.html';
+            }
         };
-        
-        // Create confetti
-        setTimeout(() => {
-            const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-            
-            for (let i = 0; i < 60; i++) {
-                setTimeout(() => {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-                    confetti.style.left = Math.random() * 100 + '%';
-                    confetti.style.top = '-10px';
-                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-                    
-                    document.body.appendChild(confetti);
-                    setTimeout(() => confetti.remove(), 3000);
-                }, i * 25);
-            }
-            
-            // Play success sound
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const notes = [523.25, 659.25, 783.99];
-                
-                notes.forEach((frequency, index) => {
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    
-                    oscillator.frequency.value = frequency;
-                    oscillator.type = 'sine';
-                    
-                    const startTime = audioContext.currentTime + (index * 0.15);
-                    const duration = 0.2;
-                    
-                    gainNode.gain.setValueAtTime(0, startTime);
-                    gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-                    
-                    oscillator.start(startTime);
-                    oscillator.stop(startTime + duration);
-                });
-            } catch (error) {
-                console.log('Audio not supported');
-            }
-        }, 1200);
+    }
 
-    </script>
+    // Confetti + success sound
+    setTimeout(() => {
+        const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+        for (let i = 0; i < 60; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }, i * 25);
+        }
+
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const notes = [523.25, 659.25, 783.99];
+
+            notes.forEach((frequency, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'sine';
+
+                const startTime = audioContext.currentTime + (index * 0.15);
+                const duration = 0.2;
+
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                oscillator.start(startTime);
+                oscillator.stop(startTime + duration);
+            });
+        } catch (error) {
+            console.log('Audio not supported');
+        }
+    }, 1200);
+</script>
+
 </body>
 </html>
