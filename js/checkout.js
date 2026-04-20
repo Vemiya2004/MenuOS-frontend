@@ -351,11 +351,7 @@ function showConfirmModal() {
         modal.classList.remove('active');
         setTimeout(() => {
             modal.style.display = 'none';
-            if (paymentMethod === 'pay-now') {
-                showPaymentGateway();
-            } else {
-                submitOrder();
-            }
+            submitOrder();
         }, 300);
     };
 }
@@ -395,7 +391,7 @@ async function submitOrder() {
             tax: parseFloat(tax.toFixed(2)),
             total: parseFloat(total.toFixed(2)),
             payment_method: selectedPaymentGateway || paymentMethod,
-            payment_status: paymentMethod === 'pay-after' ? 'pending' : 'paid',
+            payment_status: 'pending',
             payment_details: collectPaymentDetails(),
             token: sessionToken
         };
@@ -610,12 +606,6 @@ function setupPaymentMethodSelection() {
             options.forEach(opt => opt.classList.remove('selected'));
             option.classList.add('selected');
             selectedPaymentGateway = option.dataset.method;
-
-            if (selectedPaymentGateway === 'card') {
-                document.getElementById('paymentGatewayModal').classList.remove('active');
-                startCardGatewayOnly();
-                return;
-            }
 
             document.getElementById('paymentMethodStep').classList.remove('active');
             document.getElementById('paymentMethodStep').style.display = 'none';
