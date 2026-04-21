@@ -183,21 +183,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     createConfirmationModal();
 
     if (resumePayment) {
+        console.log('🔁 Resume payment triggered');
+
         paymentMethod = 'pay-now';
         localStorage.setItem('paymentMethod', paymentMethod);
 
         const payNowRadio = document.querySelector('input[value="pay-now"]');
         if (payNowRadio) payNowRadio.checked = true;
 
-        // hide confirm button if needed
         const confirmBtn = document.getElementById('confirmOrderBtn');
         if (confirmBtn) {
             confirmBtn.style.display = 'none';
         }
 
-        setTimeout(() => {
-            showPaymentGateway();
-        }, 300);
+        // ⭐ IMPORTANT: Auto start PayHere after waiter approval
+        setTimeout(async () => {
+            try {
+                selectedPaymentGateway = 'card'; // force card
+                console.log('💳 Starting PayHere sandbox...');
+            
+                await startCardGatewayOnly(); // ⭐ THIS IS THE FIX
+            
+            } catch (err) {
+                console.error('❌ Payment start failed:', err);
+                showToast('Payment failed to start. Try again.', 'error');
+            }
+        }, 500);
     }
 
     
