@@ -376,13 +376,21 @@ function showConfirmModal() {
         setTimeout(() => modal.style.display = 'none', 300);
     };
 
+    // In showConfirmModal(), replace proceedConfirmBtn.onclick:
     document.getElementById('proceedConfirmBtn').onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
         modal.classList.remove('active');
         setTimeout(() => {
             modal.style.display = 'none';
-            submitOrder();
+        
+            // ✅ FIX: Route based on payment method
+            if (paymentMethod === 'pay-now') {
+                selectedPaymentGateway = 'card';
+                startCardGatewayOnly();   // PayHere handles it
+            } else {
+                submitOrder('pending');   // Cash/counter
+            }
         }, 300);
     };
 }
@@ -391,7 +399,7 @@ function showConfirmModal() {
 // ⭐ ORDER SUBMISSION - Token included
 // =====================================================
 
-async function submitOrder() {
+async function submitOrder(paymentStatus = 'paid') {
     console.log('📤 Submitting order...');
 
     if (isSubmitting) return;
@@ -423,7 +431,7 @@ async function submitOrder() {
             total: parseFloat(total.toFixed(2)),
             payment_method: paymentMethod,
             selected_gateway: selectedPaymentGateway || null,
-            payment_status: 'pending',
+            payment_status: paymentStatus,  // ✅ dynamic
             payment_details: collectPaymentDetails(),
             token: sessionToken
         };
@@ -611,6 +619,8 @@ async function startCardGatewayOnly() {
         payhere.onCompleted = function(orderId) {
             console.log("✅ PayHere flow finished:", orderId);
             window.location.href = `payment-result.html?temp_order_id=${encodeURIComponent(tempOrderId)}&table=${encodeURIComponent(tableNumber)}&token=${encodeURIComponent(sessionToken)}&v=${Date.now()}`;
+            
+            submitOrder('paid');
         };
 
         payhere.onDismissed = function() {
