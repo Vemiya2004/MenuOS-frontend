@@ -111,8 +111,10 @@
                     const tableNumber = params.get('table');
                     const token = params.get('token');
 
+                    // In checkApproval(), when redirecting to success:
+                    const correctOrderId = `ORD-${ticketCode}`;  // matches backend
                     window.location.href =
-                        `success.html?orderId=${encodeURIComponent(orderId || '')}` +
+                        `success.html?orderId=${encodeURIComponent(correctOrderId)}` +
                         `&table=${encodeURIComponent(tableNumber || '')}` +
                         `&token=${encodeURIComponent(token || '')}`;
                 }
