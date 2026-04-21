@@ -125,6 +125,8 @@ function resetCheckoutButtonState() {
 // =====================================================
 // INITIALIZATION
 // =====================================================
+const resumePayment = urlParams.get('resume_payment') === '1';
+const resumedOrderId = urlParams.get('order_id') || '';
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('📱 Checkout page loaded');
 
@@ -139,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loadCart();
 
-    if (cart.length === 0) {
+    if (cart.length === 0 && !resumePayment) {
         console.warn('⚠️ Checkout cart is empty');
         document.getElementById('orderSummary').innerHTML = `
             <div style="padding:20px; text-align:center; color:#ef4444;">
@@ -179,6 +181,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setupEventListeners();
     createConfirmationModal();
+
+    if (resumePayment) {
+        paymentMethod = 'pay-now';
+        localStorage.setItem('paymentMethod', paymentMethod);
+
+        const payNowRadio = document.querySelector('input[value="pay-now"]');
+        if (payNowRadio) payNowRadio.checked = true;
+
+        // hide confirm button if needed
+        const confirmBtn = document.getElementById('confirmOrderBtn');
+        if (confirmBtn) {
+            confirmBtn.style.display = 'none';
+        }
+
+        setTimeout(() => {
+            showPaymentGateway();
+        }, 300);
+    }
 
     
     if (sessionStorage.getItem('payment_failed_return') === "1") {
@@ -390,7 +410,8 @@ async function submitOrder() {
             subtotal: parseFloat(subtotal.toFixed(2)),
             tax: parseFloat(tax.toFixed(2)),
             total: parseFloat(total.toFixed(2)),
-            payment_method: selectedPaymentGateway || paymentMethod,
+            payment_method: paymentMethod,
+            selected_gateway: selectedPaymentGateway || null,
             payment_status: 'pending',
             payment_details: collectPaymentDetails(),
             token: sessionToken
@@ -416,7 +437,12 @@ async function submitOrder() {
             const ticketCode = result.ticket_code;
             const orderId = result.order_id;
 
-            window.location.href = `waiting-approval.html?ticket_code=${encodeURIComponent(ticketCode)}&order_id=${encodeURIComponent(orderId)}&table=${encodeURIComponent(tableNumber)}&token=${encodeURIComponent(sessionToken)}`;
+            window.location.href =
+                `waiting-approval.html?ticket_code=${encodeURIComponent(ticketCode)}` +
+                `&order_id=${encodeURIComponent(orderId)}` +
+                `&table=${encodeURIComponent(tableNumber)}` +
+                `&token=${encodeURIComponent(sessionToken)}` +
+                `&payment_method=${encodeURIComponent(paymentMethod)}`;
         } else if (response.status === 401) {
             showSessionExpiredScreen();
         } else {
@@ -652,6 +678,16 @@ function setupPaymentMethodSelection() {
             if (!selectedPaymentGateway) return;
 
             document.getElementById('paymentGatewayModal').classList.remove('active');
+
+            if (resumePayment) {
+                // temporary: payment completed simulation
+                window.location.href =
+                    `success.html?orderId=${encodeURIComponent(resumedOrderId)}` +
+                    `&table=${encodeURIComponent(tableNumber)}` +
+                    `&token=${encodeURIComponent(sessionToken)}`;
+                return;
+            }
+
             await submitOrder();
         };
     }
