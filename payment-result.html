@@ -4,83 +4,164 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Processing Payment...</title>
+  <style>
+    body {
+      margin: 0; font-family: -apple-system, sans-serif;
+      background: #f9fafb; display: flex; align-items: center;
+      justify-content: center; min-height: 100vh;
+    }
+    .box {
+      text-align: center; padding: 40px; background: white;
+      border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,.1);
+      max-width: 360px; width: 90%;
+    }
+    .spinner {
+      width: 48px; height: 48px; border: 5px solid #e5e7eb;
+      border-top-color: #10b981; border-radius: 50%;
+      animation: spin 1s linear infinite; margin: 0 auto 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h2 { color: #1f2937; margin-bottom: 8px; }
+    p  { color: #6b7280; font-size: 14px; }
+  </style>
 </head>
 <body>
+  <div class="box">
+    <div class="spinner"></div>
+    <h2>Processing Payment</h2>
+    <p>Please wait, confirming your payment...</p>
+  </div>
+
 <script>
 (async function () {
     const params = new URLSearchParams(window.location.search);
 
     const tempOrderId = params.get("temp_order_id") || "";
-    const table = params.get("table") || "";
-    const token = params.get("token") || "";
+    const table       = params.get("table")         || "";
+    const token       = params.get("token")         || "";
+
+    const API = "https://menuos-backend.onrender.com";
+
+    // ✅ FIX: define getCartKey here (was missing in original)
+    function getCartKey(tableNo) {
+        return `cart_table_${tableNo}`;
+    }
 
     console.log("📥 Payment result params:", Object.fromEntries(params.entries()));
 
     if (!tempOrderId) {
-        alert("Missing temporary order id.");
-        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}&v=${Date.now()}`;
+        sessionStorage.setItem("payment_failed_return", "1");
+        window.location.replace(
+            `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`
+        );
         return;
     }
 
+    const rawOrder = sessionStorage.getItem("pending_paid_order");
+
+    if (!rawOrder) {
+        alert("Payment session expired. Please try again.");
+        sessionStorage.setItem("payment_failed_return", "1");
+        window.location.replace(
+            `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`
+        );
+        return;
+    }
+
+    // ── Poll PayHere status from backend ─────────────────────────────────────
+    async function checkStatus() {
+        try {
+            const res  = await fetch(`${API}/api/payhere/status/${encodeURIComponent(tempOrderId)}`);
+            const data = await res.json();
+            return data.status || "pending";
+        } catch {
+            return "pending";
+        }
+    }
+
+    let attempts = 0;
+    let status   = "pending";
+
+    while (attempts < 12) {
+        status = await checkStatus();
+        console.log("📡 PayHere status:", status);
+        if (status === "paid" || status === "failed") break;
+        await new Promise(r => setTimeout(r, 1200));
+        attempts++;
+    }
+
+    if (status !== "paid") {
+        sessionStorage.removeItem("pending_paid_order");
+        sessionStorage.setItem("payment_failed_return", "1");
+        window.location.replace(
+            `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`
+        );
+        return;
+    }
+
+    // ── Submit final paid order ───────────────────────────────────────────────
     try {
-        const statusRes = await fetch(`https://menuos-backend.onrender.com/api/payhere/status/${encodeURIComponent(tempOrderId)}`);
-        const statusData = await statusRes.json();
-
-        console.log("✅ PayHere backend status:", statusData.status);
-
-        if (!statusRes.ok) {
-            throw new Error(statusData.error || "Failed to check payment status");
-        }
-
-        if (statusData.status !== "paid") {
-            sessionStorage.removeItem("pending_paid_order");
-            sessionStorage.setItem("payment_failed_return", "1");
-            window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}&v=${Date.now()}`;
-            return;
-        }
-
-        const rawOrder = sessionStorage.getItem("pending_paid_order");
-
-        if (!rawOrder) {
-            alert("Payment was completed, but order data is missing.");
-            window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}&v=${Date.now()}`;
-            return;
-        }
-
         const orderData = JSON.parse(rawOrder);
-        orderData.payment_status = 'paid';
-        orderData.payment_method ='PayHere';
-        orderData.payment_details = { gateway:'PayHere', type: 'Cards' };
+        orderData.payment_status  = "paid";
+        orderData.payment_method  = "PayHere";
+        orderData.payment_details = { gateway: "PayHere", type: "Cards" };
 
-        const res = await fetch("https://menuos-backend.onrender.com/api/order", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify(orderData)
+        const res    = await fetch(`${API}/api/order`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body:    JSON.stringify(orderData)
         });
-
         const result = await res.json();
         console.log("📥 Final paid order result:", result);
 
         if (res.ok && result.success) {
-            localStorage.removeItem(`cart_table_${table}`);
+            // ✅ FIX: use correct getCartKey
+            localStorage.removeItem(getCartKey(table));
             sessionStorage.removeItem("pending_paid_order");
 
-            if (result.redirect_url) {
-                window.location.href = result.redirect_url;
-            } else {
-                window.location.href = `success.html?orderId=${encodeURIComponent(result.order_id)}&table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`;
+            // ── Build the final order ID (same formula as backend) ─────────────
+            const finalOrderId = result.order_id || `ORD-${result.ticket_code || tempOrderId}`;
+
+            // ── Wait up to 8s for receipt to be generated ─────────────────────
+            let receiptUrl = null;
+            for (let i = 0; i < 8; i++) {
+                try {
+                    const rRes  = await fetch(`${API}/admin/api/receipt-status/${encodeURIComponent(finalOrderId)}`);
+                    const rData = await rRes.json();
+                    if (rData.exists && rData.receipt_url) {
+                        receiptUrl = `${API}${rData.receipt_url}`;
+                        break;
+                    }
+                } catch { /* ignore */ }
+                await new Promise(r => setTimeout(r, 1000));
             }
+
+            if (result.redirect_url) {
+                window.location.replace(result.redirect_url);
+            } else {
+                let url =
+                    `success.html` +
+                    `?orderId=${encodeURIComponent(finalOrderId)}` +
+                    `&table=${encodeURIComponent(table)}` +
+                    `&token=${encodeURIComponent(token)}`;
+
+                if (receiptUrl) {
+                    url += `&receipt=${encodeURIComponent(receiptUrl)}`;
+                }
+                window.location.replace(url);
+            }
+
         } else {
             throw new Error(result.error || "Failed to save paid order");
         }
 
     } catch (err) {
         console.error("❌ Error saving approved order:", err);
-        alert("Payment completed, but order saving failed.");
-        window.location.href = `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}&v=${Date.now()}`;
+        alert("Payment completed, but order saving failed. Please contact staff.");
+        sessionStorage.setItem("payment_failed_return", "1");
+        window.location.replace(
+            `checkout.html?table=${encodeURIComponent(table)}&token=${encodeURIComponent(token)}`
+        );
     }
 })();
 </script>
