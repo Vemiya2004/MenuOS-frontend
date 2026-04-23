@@ -225,98 +225,111 @@
     sessionStorage.removeItem('orderSuccessful');
     sessionStorage.removeItem('redirecting');
 
+    const API = 'https://menuos-backend.onrender.com';
+
     // Read URL params
-    const params = new URLSearchParams(window.location.search);
-    const orderId = params.get('orderId') || '';
-    const tableNumber = params.get('table') || '';
-    const token = params.get('token') || '';
-    const receiptUrl = params.get('receipt') || '';
-    const summaryData = params.get('summary') || '';
+    const params      = new URLSearchParams(window.location.search);
+    const orderId     = params.get('orderId')  || '';
+    const tableNumber = params.get('table')    || '';
+    const token       = params.get('token')    || '';
+    let   receiptUrl  = params.get('receipt')  || '';  // may be set by payment_result.html
+    const summaryData = params.get('summary')  || '';
 
-    function getCartKey(tableNo) {
-        return `cart_table_${tableNo}`;
-    }
+    function getCartKey(tableNo) { return `cart_table_${tableNo}`; }
 
-    console.log('🎉 SUCCESS PAGE LOADED');
-    console.log('Order ID:', orderId);
-    console.log('Table:', tableNumber);
-    console.log('Receipt:', receiptUrl);
-    console.log('Token exists:', !!token);
+    console.log('🎉 SUCCESS PAGE — orderId:', orderId, 'receipt:', receiptUrl);
 
-    // Display order ID
+    // ── Display order ID ──────────────────────────────────────────────────────
     const orderIdEl = document.getElementById('orderId');
     if (orderIdEl) {
         orderIdEl.textContent = orderId && orderId !== 'null' ? orderId : 'Processing...';
     }
 
-    // Display order summary if available
+    // ── Display order summary ─────────────────────────────────────────────────
     if (summaryData) {
         try {
-            const summary = JSON.parse(atob(summaryData));
-            console.log('Order Summary:', summary);
-
+            const summary        = JSON.parse(atob(summaryData));
             const summarySection = document.getElementById('orderSummarySection');
-            const orderItemsDiv = document.getElementById('orderItems');
-            const subtotalEl = document.getElementById('summarySubtotal');
-            const taxEl = document.getElementById('summaryTax');
-            const totalEl = document.getElementById('summaryTotal');
-
+            const orderItemsDiv  = document.getElementById('orderItems');
             if (summarySection) summarySection.style.display = 'block';
-
             if (orderItemsDiv && Array.isArray(summary.items)) {
                 orderItemsDiv.innerHTML = summary.items.map(item => {
-                    const displayName = item.size ? `${item.name} (${item.size})` : item.name;
+                    const dn  = item.size ? `${item.name} (${item.size})` : item.name;
                     const qty = item.quantity || 1;
-                    const lineTotal = (Number(item.price || 0) * qty).toFixed(2);
-
-                    return `
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
-                            <span style="color: #374151;">${qty} x ${displayName}</span>
-                            <span style="color: #1f2937; font-weight: 500;">LKR ${lineTotal}</span>
-                        </div>
-                    `;
+                    const lt  = (Number(item.price || 0) * qty).toFixed(2);
+                    return `<div style="display:flex;justify-content:space-between;margin-bottom:8px;
+                                        padding-bottom:8px;border-bottom:1px solid #e5e7eb;">
+                                <span style="color:#374151;">${qty} x ${dn}</span>
+                                <span style="color:#1f2937;font-weight:500;">LKR ${lt}</span>
+                            </div>`;
                 }).join('');
             }
-
-            if (subtotalEl) subtotalEl.textContent = `LKR ${Number(summary.subtotal || 0).toFixed(2)}`;
-            if (taxEl) taxEl.textContent = `LKR ${Number(summary.tax || 0).toFixed(2)}`;
-            if (totalEl) totalEl.textContent = `LKR ${Number(summary.total || 0).toFixed(2)}`;
-        } catch (error) {
-            console.error('Error parsing summary:', error);
-        }
+            const s = document.getElementById('summarySubtotal');
+            const t = document.getElementById('summaryTax');
+            const g = document.getElementById('summaryTotal');
+            if (s) s.textContent = `LKR ${Number(summary.subtotal || 0).toFixed(2)}`;
+            if (t) t.textContent = `LKR ${Number(summary.tax     || 0).toFixed(2)}`;
+            if (g) g.textContent = `LKR ${Number(summary.total   || 0).toFixed(2)}`;
+        } catch (e) { console.error('Summary parse error:', e); }
     }
 
-    // Receipt button
+    // ── Receipt button with smart polling ────────────────────────────────────
+    // If receipt URL already in params (pay-now path), use it directly.
+    // If not (pay-after path), poll /admin/api/receipt-status until file ready.
     const receiptBtn = document.getElementById('receiptBtn');
-    if (receiptBtn) {
-        receiptBtn.onclick = () => {
-            let finalReceiptUrl = '';
 
+    async function pollForReceipt(maxWaitMs = 15000) {
+        if (!orderId) return null;
+        const start = Date.now();
+        while (Date.now() - start < maxWaitMs) {
+            try {
+                const res  = await fetch(`${API}/admin/api/receipt-status/${encodeURIComponent(orderId)}`);
+                const data = await res.json();
+                if (data.exists && data.receipt_url) return `${API}${data.receipt_url}`;
+            } catch { /* ignore */ }
+            await new Promise(r => setTimeout(r, 1500));
+        }
+        return null;
+    }
+
+    if (receiptBtn) {
+        receiptBtn.onclick = async () => {
+            // If we already have the URL, open directly
             if (receiptUrl && receiptUrl !== 'null') {
-                finalReceiptUrl = receiptUrl.startsWith('http')
+                const url = receiptUrl.startsWith('http')
                     ? receiptUrl
-                    : `https://menuos-backend.onrender.com${receiptUrl}`;
-            } else if (orderId) {
-                finalReceiptUrl = `https://menuos-backend.onrender.com/receipts/html/${encodeURIComponent(orderId)}.html`;
+                    : `${API}${receiptUrl}`;
+                window.open(url, '_blank');
+                return;
             }
 
-            if (finalReceiptUrl) {
-                window.open(finalReceiptUrl, '_blank');
+            // Otherwise show loading state and poll
+            receiptBtn.disabled   = true;
+            receiptBtn.innerHTML  = '<span style="opacity:.6">⏳ Preparing receipt…</span>';
+
+            const found = await pollForReceipt(12000);
+            receiptBtn.disabled  = false;
+            receiptBtn.innerHTML = `<span>
+                <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                    <path d="M358.4 3.2L320 48 265.6 3.2a15.9 15.9 0 0 0-19.2 0L192 48 137.6 3.2a15.9 15.9 0 0 0-19.2 0L64 48 25.6 3.2C15-4.7 0 2.8 0 16v480c0 13.2 15 20.7 25.6 12.8L64 464l54.4 44.8a15.9 15.9 0 0 0 19.2 0L192 464l54.4 44.8a15.9 15.9 0 0 0 19.2 0L320 464l38.4 44.8c10.5 7.9 25.6.4 25.6-12.8V16c0-13.2-15-20.7-25.6-12.8zM320 360c0 4.4-3.6 8-8 8H72c-4.4 0-8-3.6-8-8v-16c0-4.4 3.6-8 8-8h240c4.4 0 8 3.6 8 8v16zm0-96c0 4.4-3.6 8-8 8H72c-4.4 0-8-3.6-8-8v-16c0-4.4 3.6-8 8-8h240c4.4 0 8 3.6 8 8v16zm0-96c0 4.4-3.6 8-8 8H72c-4.4 0-8-3.6-8-8v-16c0-4.4 3.6-8 8-8h240c4.4 0 8 3.6 8 8v16z"/>
+                </svg>
+            </span> Receipt`;
+
+            if (found) {
+                receiptUrl = found;
+                window.open(found, '_blank');
             } else {
-                alert('Receipt not available yet');
+                alert('Receipt is being generated. Please try again in a moment.');
             }
         };
     }
 
-    // Back to Menu button
+    // ── Back to Menu ──────────────────────────────────────────────────────────
     const menuBtn = document.getElementById('menuBtn');
     if (menuBtn) {
         menuBtn.onclick = () => {
-            if (tableNumber) {
-                localStorage.removeItem(getCartKey(tableNumber));
-            }
+            if (tableNumber) localStorage.removeItem(getCartKey(tableNumber));
             localStorage.removeItem('paymentMethod');
-
             if (tableNumber && token) {
                 window.location.href = `menu.html?table=${encodeURIComponent(tableNumber)}&token=${encodeURIComponent(token)}`;
             } else if (tableNumber) {
@@ -327,51 +340,34 @@
         };
     }
 
-    // Confetti + success sound
+    // ── Confetti + success sound ──────────────────────────────────────────────
     setTimeout(() => {
-        const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-
+        const colors = ['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
         for (let i = 0; i < 60; i++) {
             setTimeout(() => {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.left = Math.random() * 100 + '%';
-                confetti.style.top = '-10px';
-                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-
-                document.body.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 3000);
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.background    = colors[Math.floor(Math.random() * colors.length)];
+                c.style.left          = Math.random() * 100 + '%';
+                c.style.top           = '-10px';
+                c.style.borderRadius  = Math.random() > 0.5 ? '50%' : '0';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 3000);
             }, i * 25);
         }
-
         try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const notes = [523.25, 659.25, 783.99];
-
-            notes.forEach((frequency, index) => {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-
-                oscillator.frequency.value = frequency;
-                oscillator.type = 'sine';
-
-                const startTime = audioContext.currentTime + (index * 0.15);
-                const duration = 0.2;
-
-                gainNode.gain.setValueAtTime(0, startTime);
-                gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-                oscillator.start(startTime);
-                oscillator.stop(startTime + duration);
+            const ac = new (window.AudioContext || window.webkitAudioContext)();
+            [523.25, 659.25, 783.99].forEach((freq, i) => {
+                const osc = ac.createOscillator(), g = ac.createGain();
+                osc.connect(g); g.connect(ac.destination);
+                osc.frequency.value = freq; osc.type = 'sine';
+                const t = ac.currentTime + i * 0.15;
+                g.gain.setValueAtTime(0, t);
+                g.gain.linearRampToValueAtTime(0.3, t + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                osc.start(t); osc.stop(t + 0.2);
             });
-        } catch (error) {
-            console.log('Audio not supported');
-        }
+        } catch { /* audio not supported */ }
     }, 1200);
 </script>
 
