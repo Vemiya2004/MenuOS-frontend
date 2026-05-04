@@ -1,0 +1,22 @@
+{
+  "name": "Waiter Panel – MenuOS",
+  "short_name": "Waiter",
+  "description": "Approve orders and manage waiter calls",
+  "start_url": "/waiter-pwa.html",
+  "display": "standalone",
+  "background_color": "#0c0f1a",
+  "theme_color": "#0c0f1a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon1/restaurant_logo-favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon1/restaurant_logo-favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

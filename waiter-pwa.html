@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0c0f1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Waiter Panel">
+  <title>Waiter Panel – MenuOS</title>
+  <link rel="manifest" href="/waiter-manifest.json">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
+
+    /* ══════════════════════════════════
+       DESIGN TOKENS
+    ══════════════════════════════════ */
+    :root {
+      --bg:        #0c0f1a;
+      --surface:   #131826;
+      --surface2:  #1a2235;
+      --border:    #232d42;
+      --border2:   #2a3550;
+
+      --orange:    #f97316;
+      --orange-d:  #c05a0e;
+      --orange-bg: rgba(249,115,22,0.10);
+      --green:     #22c55e;
+      --green-bg:  rgba(34,197,94,0.10);
+      --red:       #ef4444;
+      --red-bg:    rgba(239,68,68,0.10);
+      --blue:      #3b82f6;
+
+      --text:      #eef2ff;
+      --text2:     #94a3b8;
+      --text3:     #4b5675;
+
+      --radius:    18px;
+      --radius-sm: 12px;
+    }
+
+    /* ══════════════════════════════════
+       RESET & BASE
+    ══════════════════════════════════ */
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ══════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════ */
+    #loginScreen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 24px;
+      background:
+        radial-gradient(ellipse 70% 40% at 50% -10%,
+          rgba(249,115,22,0.15) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 30% at 90% 80%,
+          rgba(34,197,94,0.06) 0%, transparent 60%),
+        var(--bg);
+    }
+
+    .login-emblem {
+      width: 84px; height: 84px;
+      border-radius: 26px;
+      background: linear-gradient(145deg, #f97316, #c05a0e);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 22px;
+      box-shadow:
+        0 0 0 1px rgba(249,115,22,0.3),
+        0 12px 40px rgba(249,115,22,0.25);
+    }
+
+    .login-emblem svg { width: 44px; height: 44px; }
+
+    .login-title {
+      font-size: 30px; font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 30%, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .login-sub {
+      font-size: 13px; color: var(--text3);
+      font-weight: 500; margin-bottom: 40px;
+      text-transform: uppercase; letter-spacing: 1.5px;
+    }
+
+    .login-box {
+      width: 100%; max-width: 380px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    .f-label {
+      display: block;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text2); margin-bottom: 8px;
+    }
+
+    .f-input {
+      display: block; width: 100%;
+      padding: 13px 16px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text); font-size: 16px;
+      font-family: 'Outfit', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 18px;
+    }
+
+    .f-input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(249,115,22,0.15);
+    }
+
+    .f-btn {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, var(--orange), var(--orange-d));
+      color: #fff; border: none;
+      border-radius: var(--radius-sm);
+      font-size: 16px; font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer; letter-spacing: 0.3px;
+      transition: opacity 0.2s, transform 0.1s;
+      box-shadow: 0 4px 20px rgba(249,115,22,0.3);
+    }
+
+    .f-btn:active { transform: scale(0.98); opacity: 0.88; }
+
+    .f-err {
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: var(--red-bg);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 10px;
+      color: var(--red); font-size: 13px; font-weight: 600;
+      text-align: center; display: none;
+    }
+
+    /* ══════════════════════════════════
+       APP SHELL
+    ══════════════════════════════════ */
+    #app {
+      display: none;
+      flex-direction: column;
+      min-height: 100dvh;
+    }
+
+    /* Top Bar */
+    .topbar {
+      position: sticky; top: 0; z-index: 200;
+      background: rgba(19,24,38,0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 18px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .tb-brand {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .tb-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--orange), var(--orange-d));
+      border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .tb-logo svg { width: 20px; height: 20px; color: white; }
+
+    .tb-title { font-size: 17px; font-weight: 800; }
+
+    .tb-right { display: flex; align-items: center; gap: 8px; }
+
+    .live-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 10px;
+      background: var(--green-bg);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 20px;
+      font-size: 11px; font-weight: 700; color: var(--green);
+    }
+
+    .live-dot {
+      width: 6px; height: 6px;
+      background: var(--green); border-radius: 50%;
+      animation: blink 1.5s ease infinite;
+    }
+
+    @keyframes blink {
+      0%,100% { opacity:1; } 50% { opacity:0.3; }
+    }
+
+    .icon-btn {
+      width: 36px; height: 36px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text2);
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .icon-btn:hover { color: var(--red); border-color: var(--red); }
+
+    /* ── Tab Bar ── */
+    .tabbar {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      flex: 1; padding: 13px 10px 11px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 7px;
+      font-size: 13px; font-weight: 700;
+      color: var(--text3);
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+      position: relative;
+      user-select: none;
+    }
+
+    .tab.active {
+      color: var(--orange);
+      border-bottom-color: var(--orange);
+    }
+
+    .tab-badge {
+      background: var(--red);
+      color: #fff;
+      font-size: 10px; font-weight: 800;
+      min-width: 18px; height: 18px;
+      border-radius: 9px; padding: 0 5px;
+      display: none;
+      align-items: center; justify-content: center;
+      line-height: 1;
+    }
+
+    .tab-badge.show { display: inline-flex; }
+
+    /* ── Content Panels ── */
+    .panel { display: none; flex: 1; overflow-y: auto; padding-bottom: 24px; }
+    .panel.active { display: block; }
+
+    /* ══════════════════════════════════
+       ORDERS TAB
+    ══════════════════════════════════ */
+
+    /* Stats strip */
+    .stats-row {
+      display: flex; gap: 10px;
+      padding: 16px 16px 8px;
+      overflow-x: auto;
+    }
+
+    .stats-row::-webkit-scrollbar { display: none; }
+
+    .stat-card {
+      flex: 0 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      min-width: 110px;
+    }
+
+    .sc-label {
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text3); margin-bottom: 6px;
+    }
+
+    .sc-val {
+      font-size: 24px; font-weight: 900;
+      font-family: 'DM Mono', monospace;
+      line-height: 1;
+    }
+
+    .sc-val.orange { color: var(--orange); }
+    .sc-val.green  { color: var(--green); }
+    .sc-val.white  { color: var(--text); }
+
+    /* Section label */
+    .sec-head {
+      padding: 12px 16px 10px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .sec-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text3);
+    }
+
+    .refresh-btn {
+      background: none; border: none;
+      color: var(--text3); font-size: 18px;
+      cursor: pointer; padding: 4px 8px;
+      border-radius: 8px;
+      transition: color 0.2s, transform 0.4s;
+    }
+
+    .refresh-btn:active {
+      color: var(--orange);
+      transform: rotate(180deg);
+    }
+
+    /* Order Cards */
+    .orders-list {
+      padding: 0 14px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .order-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity:0; transform: translateY(10px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    .order-card.new {
+      border-color: rgba(249,115,22,0.4);
+      box-shadow: 0 0 0 1px rgba(249,115,22,0.2), 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .oc-head {
+      padding: 15px 16px 12px;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .oc-code {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; color: var(--text3);
+      margin-bottom: 3px;
+    }
+
+    .oc-table {
+      font-size: 22px; font-weight: 900;
+    }
+
+    .oc-time {
+      font-size: 11px; color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      margin-top: 2px;
+    }
+
+    .oc-amount {
+      text-align: right;
+    }
+
+    .oc-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; }
+
+    .oc-total {
+      font-size: 20px; font-weight: 900;
+      color: var(--orange);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .oc-method {
+      display: inline-block; margin-top: 3px;
+      padding: 2px 8px;
+      background: var(--orange-bg);
+      border-radius: 6px;
+      font-size: 10px; font-weight: 700;
+      color: var(--orange); text-transform: uppercase;
+    }
+
+    .oc-items { padding: 10px 16px; }
+
+    .oc-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 13px;
+    }
+
+    .oc-item:last-child { border-bottom: none; }
+
+    .oi-name { color: var(--text); }
+    .oi-size { font-size: 11px; color: var(--text3); }
+    .oi-price {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px; color: var(--text2);
+      white-space: nowrap;
+    }
+
+    .oc-more { color: var(--text3); font-size: 12px; padding: 6px 0 0; }
+
+    .oc-actions {
+      padding: 10px 16px 14px;
+      display: flex; gap: 10px;
+    }
+
+    .btn-detail {
+      flex: 1; padding: 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      color: var(--text2); font-size: 13px; font-weight: 700;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer; transition: border-color 0.2s;
+    }
+
+    .btn-detail:hover { border-color: var(--text3); }
+
+    .btn-approve {
+      flex: 2; padding: 11px;
+      background: linear-gradient(135deg, var(--green), #16a34a);
+      border: none; border-radius: 11px;
+      color: #fff; font-size: 13px; font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: opacity 0.2s;
+      box-shadow: 0 4px 14px rgba(34,197,94,0.25);
+    }
+
+    .btn-approve:active { opacity: 0.85; }
+    .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ══════════════════════════════════
+       CALLS TAB
+    ══════════════════════════════════ */
+
+    .calls-pending { padding: 14px 14px 8px; }
+    .calls-history { padding: 8px 14px; }
+
+    /* Active call card - dramatic */
+    .call-card {
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      overflow: hidden;
+      animation: callPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes callPop {
+      from { opacity:0; transform:scale(0.9); }
+      to   { opacity:1; transform:scale(1); }
+    }
+
+    .call-inner {
+      background: linear-gradient(145deg, #1a100a, var(--surface));
+      border: 1px solid rgba(249,115,22,0.35);
+      border-radius: var(--radius);
+      padding: 18px;
+      position: relative; overflow: hidden;
+    }
+
+    .call-inner::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--orange), transparent);
+      animation: scan 2s linear infinite;
+    }
+
+    @keyframes scan { from { opacity:0.3; } 50% { opacity:1; } to { opacity:0.3; } }
+
+    .ci-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .ci-table-n { font-size: 38px; font-weight: 900; color: var(--orange); line-height: 1; }
+    .ci-table-l { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+
+    .ci-bell {
+      font-size: 32px;
+      animation: ringBell 1.5s ease-in-out infinite;
+      transform-origin: top center;
+    }
+
+    @keyframes ringBell {
+      0%,100% { transform:rotate(0); }
+      10% { transform:rotate(-20deg); }
+      20% { transform:rotate(20deg); }
+      30% { transform:rotate(-15deg); }
+      40% { transform:rotate(15deg); }
+      50% { transform:rotate(-8deg); }
+      60% { transform:rotate(8deg); }
+      70% { transform:rotate(0); }
+    }
+
+    .ci-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px; color: var(--text3); margin-bottom: 14px;
+    }
+
+    .ci-msg {
+      font-size: 13px; color: var(--text2); margin-bottom: 14px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+    }
+
+    .btn-attend {
+      width: 100%; padding: 13px;
+      background: var(--orange);
+      color: #fff; border: none; border-radius: 11px;
+      font-size: 14px; font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer; transition: opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+
+    .btn-attend:active { opacity: 0.82; }
+
+    /* No calls */
+    .no-calls {
+      text-align: center; padding: 50px 20px;
+    }
+
+    .nc-icon { font-size: 50px; margin-bottom: 14px; filter: grayscale(0.6); }
+    .nc-title { font-size: 17px; font-weight: 700; margin-bottom: 5px; }
+    .nc-sub { color: var(--text3); font-size: 13px; }
+
+    /* History list */
+    .hist-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hist-item:last-child { border-bottom: none; }
+
+    .hi-left { display: flex; align-items: center; gap: 12px; }
+
+    .hi-num {
+      width: 38px; height: 38px;
+      background: var(--surface2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: var(--text3);
+    }
+
+    .hi-label { font-size: 14px; font-weight: 600; }
+    .hi-time {
+      font-size: 11px; color: var(--text3);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .badge-done {
+      padding: 3px 9px;
+      background: var(--green-bg);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 6px;
+      font-size: 11px; font-weight: 700; color: var(--green);
+    }
+
+    /* ══════════════════════════════════
+       BOTTOM SHEET (Order Detail)
+    ══════════════════════════════════ */
+    .overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+      display: flex; align-items: flex-end;
+    }
+
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .sheet {
+      width: 100%; max-height: 82vh;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px 40px;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.34,1.3,0.64,1);
+    }
+
+    .overlay.open .sheet { transform: translateY(0); }
+
+    .sheet-handle {
+      width: 38px; height: 4px;
+      background: var(--border2); border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    .sheet-title { font-size: 19px; font-weight: 900; margin-bottom: 18px; }
+
+    .sheet-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .sheet-row:last-of-type { border-bottom: none; }
+
+    .sheet-total {
+      display: flex; justify-content: space-between;
+      padding: 14px 0; margin-top: 8px;
+      border-top: 2px solid var(--border2);
+      font-size: 17px; font-weight: 800;
+    }
+
+    .sheet-total span:last-child { color: var(--orange); }
+
+    .sheet-approve {
+      width: 100%; margin-top: 20px; padding: 16px;
+      background: linear-gradient(135deg, var(--green), #16a34a);
+      border: none; border-radius: 14px;
+      color: #fff; font-size: 16px; font-weight: 800;
+      font-family: 'Outfit', sans-serif; cursor: pointer;
+      box-shadow: 0 6px 20px rgba(34,197,94,0.25);
+      transition: opacity 0.2s;
+    }
+
+    .sheet-approve:active { opacity: 0.85; }
+
+    /* ══════════════════════════════════
+       TOAST
+    ══════════════════════════════════ */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 14px; padding: 12px 22px;
+      font-size: 14px; font-weight: 600;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+      z-index: 999; white-space: nowrap;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ══════════════════════════════════
+       EMPTY
+    ══════════════════════════════════ */
+    .empty {
+      text-align: center; padding: 60px 20px;
+    }
+
+    .empty-ico { font-size: 54px; margin-bottom: 14px; filter: grayscale(0.5); }
+    .empty-t { font-size: 18px; font-weight: 800; margin-bottom: 5px; }
+    .empty-s { color: var(--text3); font-size: 13px; }
+
+    /* ══════════════════════════════════
+       INSTALL BANNER
+    ══════════════════════════════════ */
+    #installBanner {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 14px 18px;
+      display: none;
+      align-items: center; gap: 12px;
+    }
+
+    .ib-txt { flex: 1; font-size: 13px; line-height: 1.4; }
+    .ib-txt strong { display: block; font-size: 14px; font-weight: 800; }
+
+    .ib-install {
+      padding: 10px 16px;
+      background: var(--orange); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 13px; font-weight: 800;
+      font-family: 'Outfit', sans-serif; cursor: pointer;
+    }
+
+    .ib-x {
+      background: none; border: none;
+      color: var(--text3); font-size: 22px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     LOGIN
+════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-emblem">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  </div>
+  <div class="login-title">Waiter Panel</div>
+  <div class="login-sub">MenuOS Staff</div>
+
+  <div class="login-box">
+    <label class="f-label">Username</label>
+    <input id="lu" type="text" class="f-input" placeholder="admin" autocomplete="username">
+
+    <label class="f-label">Password</label>
+    <input id="lp" type="password" class="f-input" placeholder="••••••••" autocomplete="current-password">
+
+    <button class="f-btn" id="loginBtn">Sign In →</button>
+    <div class="f-err" id="loginErr">Incorrect username or password.</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     APP SHELL
+════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="tb-brand">
+      <div class="tb-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      </div>
+      <span class="tb-title">Waiter Panel</span>
+    </div>
+    <div class="tb-right">
+      <div class="live-pill">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+      <div class="icon-btn" id="logoutBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tabbar">
+    <div class="tab active" data-tab="orders">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+      </svg>
+      Orders
+      <span class="tab-badge" id="ordersBadge">0</span>
+    </div>
+    <div class="tab" data-tab="calls">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+      Calls
+      <span class="tab-badge" id="callsBadge">0</span>
+    </div>
+  </div>
+
+  <!-- ── ORDERS PANEL ── -->
+  <div class="panel active" id="panelOrders">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="sc-label">Pending</div>
+        <div class="sc-val orange" id="sPending">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Approved</div>
+        <div class="sc-val green" id="sApproved">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Revenue</div>
+        <div class="sc-val white" id="sRevenue">–</div>
+      </div>
+    </div>
+
+    <div class="sec-head">
+      <span class="sec-label">Pending Orders</span>
+      <button class="refresh-btn" id="refreshOrders">↻</button>
+    </div>
+
+    <div class="orders-list" id="ordersList"></div>
+  </div>
+
+  <!-- ── CALLS PANEL ── -->
+  <div class="panel" id="panelCalls">
+    <div class="calls-pending">
+      <div class="sec-head" style="padding:12px 0 10px;">
+        <span class="sec-label">Active Calls</span>
+        <button class="refresh-btn" id="refreshCalls">↻</button>
+      </div>
+      <div id="callsActive"></div>
+    </div>
+
+    <div class="calls-history">
+      <div class="sec-label" style="margin-bottom:12px;">Recent History</div>
+      <div id="callsHistory"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ORDER DETAIL SHEET
+════════════════════════════════════════ -->
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="sheetTitle">Order Details</div>
+    <div id="sheetBody"></div>
+    <div class="sheet-total">
+      <span>Total</span>
+      <span id="sheetTotal">LKR 0</span>
+    </div>
+    <button class="sheet-approve" id="sheetApproveBtn">✓ Approve Order</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Install Banner -->
+<div id="installBanner">
+  <div class="ib-txt">
+    <strong>Install Waiter Panel</strong>
+    Add to home screen for instant access
+  </div>
+  <button class="ib-install" id="installBtn">Install</button>
+  <button class="ib-x" id="dismissInstall">×</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     SCRIPT
+════════════════════════════════════════ -->
+<script>
+/* ── Config ── */
+const API = 'https://menuos-backend.onrender.com';
+
+/* ── State ── */
+let orders      = [];
+let sheetId     = null;
+let lastOrders  = 0;
+let lastCalls   = 0;
+let deferredPWA = null;
+let audioCtx    = null;
+
+/* ══════════════════════
+   AUDIO
+══════════════════════ */
+function initAudio() {
+  if (!audioCtx)
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+}
+
+function playOrderSound() {
+  initAudio(); if (!audioCtx) return;
+  [[880,0],[660,0.2]].forEach(([f,d]) => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine'; o.frequency.value = f;
+    const t = audioCtx.currentTime + d;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.4, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o.start(t); o.stop(t + 0.5);
+  });
+}
+
+function playCallSound() {
+  initAudio(); if (!audioCtx) return;
+  [1046, 1318, 1046].forEach((f, i) => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'triangle'; o.frequency.value = f;
+    const t = audioCtx.currentTime + i * 0.14;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.45, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+    o.start(t); o.stop(t + 0.22);
+  });
+}
+
+document.addEventListener('click', initAudio, { once: true });
+
+/* ══════════════════════
+   TOAST
+══════════════════════ */
+function toast(msg, dur = 2800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ══════════════════════
+   LOGIN
+══════════════════════ */
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('lp').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin() {
+  const u   = document.getElementById('lu').value.trim();
+  const p   = document.getElementById('lp').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+
+  if (!u || !p) { err.textContent = 'Enter username and password.'; err.style.display = 'block'; return; }
+
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  err.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/admin/login`, {
+      method:      'POST',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:        `username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`
+    });
+
+    /* Success = redirected away from /login page */
+    if (res.ok && !res.url.includes('/login')) {
+      sessionStorage.setItem('wp_auth', '1');
+      showApp();
+    } else {
+      err.style.display = 'block';
+    }
+  } catch {
+    err.textContent = 'Network error. Check connection.';
+    err.style.display = 'block';
+  }
+
+  btn.textContent = 'Sign In →'; btn.disabled = false;
+}
+
+/* ══════════════════════
+   APP BOOT
+══════════════════════ */
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  const app = document.getElementById('app');
+  app.style.display = 'flex';
+  app.style.flexDirection = 'column';
+  startPolling();
+}
+
+if (sessionStorage.getItem('wp_auth')) showApp();
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.clear(); location.reload();
+});
+
+/* ══════════════════════
+   TABS
+══════════════════════ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel' + cap(tab.dataset.tab)).classList.add('active');
+  });
+});
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+/* ══════════════════════
+   ORDERS FETCH & RENDER
+══════════════════════ */
+async function fetchOrders() {
+  try {
+    const res = await fetch(`${API}/admin/api/waiter-tickets?status=pending_waiter`,
+                            { credentials: 'include' });
+    if (res.redirected || res.status === 302) { sessionStorage.clear(); location.reload(); return; }
+    const data = await res.json();
+    if (!Array.isArray(data)) return;
+
+    if (data.length > lastOrders) playOrderSound();
+    lastOrders = data.length;
+    orders = data;
+
+    renderOrders();
+    updateOrderStats();
+    updateBadge('ordersBadge', data.length);
+  } catch(e) { console.error('Orders fetch:', e); }
+}
+
+function renderOrders() {
+  const list = document.getElementById('ordersList');
+
+  if (orders.length === 0) {
+    list.innerHTML = `
+      <div class="empty">
+        <div class="empty-ico">🍽️</div>
+        <div class="empty-t">All clear!</div>
+        <div class="empty-s">No pending orders at the moment.</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = orders.map(t => {
+    let items = [];
+    try { items = typeof t.items === 'string' ? JSON.parse(t.items) : (t.items || []); } catch(e){}
+
+    const preview = items.slice(0, 3).map(it => {
+      const sz = it.size ? `<span class="oi-size"> (${it.size})</span>` : '';
+      return `<div class="oc-item">
+        <span class="oi-name">${it.quantity||1}× ${it.name}${sz}</span>
+        <span class="oi-price">LKR ${((it.price||0)*(it.quantity||1)).toFixed(0)}</span>
+      </div>`;
+    }).join('');
+
+    const more = items.length > 3
+      ? `<div class="oc-more">+${items.length-3} more items…</div>` : '';
+
+    return `
+      <div class="order-card" id="oc-${t.id}">
+        <div class="oc-head">
+          <div>
+            <div class="oc-code">${t.ticket_code}</div>
+            <div class="oc-table">Table ${t.table_number}</div>
+            <div class="oc-time">${ago(t.created_at)}</div>
+          </div>
+          <div class="oc-amount">
+            <div class="oc-lbl">Total</div>
+            <div class="oc-total">LKR ${Number(t.total).toFixed(0)}</div>
+            <div class="oc-method">${t.payment_method}</div>
+          </div>
+        </div>
+        <div class="oc-items">${preview}${more}</div>
+        <div class="oc-actions">
+          <button class="btn-detail" onclick="openSheet(${t.id})">Details</button>
+          <button class="btn-approve" onclick="approveOrder(${t.id}, this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Approve
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function updateOrderStats() {
+  document.getElementById('sPending').textContent = orders.length;
+  try {
+    const res  = await fetch(`${API}/admin/api/waiter-tickets?status=all`, { credentials: 'include' });
+    const all  = await res.json();
+    if (!Array.isArray(all)) return;
+    const today = new Date().toDateString();
+    const done  = all.filter(t => t.waiter_status === 'approved' &&
+                              new Date(t.created_at).toDateString() === today);
+    document.getElementById('sApproved').textContent = done.length;
+    const rev = done.reduce((s, t) => s + Number(t.total || 0), 0);
+    document.getElementById('sRevenue').textContent  = `LKR ${rev.toFixed(0)}`;
+  } catch(e) {}
+}
+
+/* ── Approve ── */
+async function approveOrder(id, btn) {
+  btn.disabled = true; btn.innerHTML = 'Approving…';
+  try {
+    const res = await fetch(`${API}/admin/api/waiter-tickets/${id}/approve`,
+                            { method: 'PUT', credentials: 'include' });
+    if (res.ok) {
+      toast('✓ Order approved!');
+      fadeOut(`oc-${id}`);
+      document.getElementById('overlay').classList.remove('open');
+      setTimeout(fetchOrders, 350);
+    } else {
+      toast('❌ Approval failed'); btn.disabled = false; btn.textContent = 'Approve';
+    }
+  } catch {
+    toast('❌ Network error'); btn.disabled = false; btn.textContent = 'Approve';
+  }
+}
+
+/* ── Detail Sheet ── */
+function openSheet(id) {
+  const t = orders.find(x => x.id === id); if (!t) return;
+  sheetId = id;
+
+  let items = [];
+  try { items = typeof t.items === 'string' ? JSON.parse(t.items) : (t.items || []); } catch(e) {}
+
+  document.getElementById('sheetTitle').textContent = `Table ${t.table_number} — ${t.ticket_code}`;
+  document.getElementById('sheetBody').innerHTML = items.map(it => {
+    const sz = it.size ? ` (${it.size})` : '';
+    return `<div class="sheet-row">
+      <span>${it.quantity||1}× ${it.name}${sz}</span>
+      <span>LKR ${((it.price||0)*(it.quantity||1)).toFixed(2)}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('sheetTotal').textContent = `LKR ${Number(t.total).toFixed(2)}`;
+  const ab = document.getElementById('sheetApproveBtn');
+  ab.textContent = '✓ Approve Order';
+  ab.onclick = () => { ab.textContent = 'Approving…'; approveOrder(id, ab); };
+
+  document.getElementById('overlay').classList.add('open');
+}
+
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay'))
+    document.getElementById('overlay').classList.remove('open');
+});
+
+/* ══════════════════════
+   CALLS FETCH & RENDER
+══════════════════════ */
+let callRepeat = null;
+
+async function fetchCalls() {
+  try {
+    const res   = await fetch(`${API}/admin/api/waiter-calls?status=all`, { credentials: 'include' });
+    if (res.redirected || res.status === 302) { sessionStorage.clear(); location.reload(); return; }
+    const calls = await res.json();
+    if (!Array.isArray(calls)) return;
+
+    const pending  = calls.filter(c => c.status === 'pending');
+    const attended = calls.filter(c => c.status === 'attended').slice(0, 15);
+
+    /* Sound logic */
+    if (pending.length > lastCalls) {
+      playCallSound();
+      if (!callRepeat) {
+        callRepeat = setInterval(() => {
+          if (lastCalls > 0) playCallSound();
+          else { clearInterval(callRepeat); callRepeat = null; }
+        }, 8000);
+      }
+    }
+    if (pending.length === 0 && callRepeat) { clearInterval(callRepeat); callRepeat = null; }
+    lastCalls = pending.length;
+
+    updateBadge('callsBadge', pending.length);
+    renderCalls(pending, attended);
+  } catch(e) { console.error('Calls fetch:', e); }
+}
+
+function renderCalls(pending, attended) {
+  /* Active */
+  const ac = document.getElementById('callsActive');
+  if (pending.length === 0) {
+    ac.innerHTML = `
+      <div class="no-calls">
+        <div class="nc-icon">😌</div>
+        <div class="nc-title">All quiet</div>
+        <div class="nc-sub">No active waiter calls right now.</div>
+      </div>`;
+  } else {
+    ac.innerHTML = pending.map(c => `
+      <div class="call-card" id="cc-${c.id}">
+        <div class="call-inner">
+          <div class="ci-row">
+            <div>
+              <div class="ci-table-l">Table</div>
+              <div class="ci-table-n">${c.table_number}</div>
+            </div>
+            <div class="ci-bell">🔔</div>
+          </div>
+          <div class="ci-time">${ago(c.created_at)}</div>
+          <div class="ci-msg">${c.message || 'Waiter please come to my table'}</div>
+          <button class="btn-attend" onclick="attendCall(${c.id}, this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Mark as Attended
+          </button>
+        </div>
+      </div>`).join('');
+  }
+
+  /* History */
+  const hi = document.getElementById('callsHistory');
+  if (attended.length === 0) {
+    hi.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:14px 0;">No history yet.</div>';
+  } else {
+    hi.innerHTML = attended.map(c => `
+      <div class="hist-item">
+        <div class="hi-left">
+          <div class="hi-num">${c.table_number}</div>
+          <div>
+            <div class="hi-label">Table ${c.table_number}</div>
+            <div class="hi-time">${fmtTime(c.created_at)}</div>
+          </div>
+        </div>
+        <span class="badge-done">✓ Done</span>
+      </div>`).join('');
+  }
+}
+
+async function attendCall(id, btn) {
+  btn.disabled = true; btn.textContent = 'Marking…';
+  try {
+    const res = await fetch(`${API}/admin/api/waiter-calls/${id}/attend`,
+                            { method: 'PUT', credentials: 'include' });
+    if (res.ok) {
+      toast('✓ Marked as attended');
+      fadeOut(`cc-${id}`);
+      lastCalls = Math.max(0, lastCalls - 1);
+      setTimeout(fetchCalls, 350);
+    } else {
+      toast('❌ Failed'); btn.disabled = false; btn.textContent = 'Mark as Attended';
+    }
+  } catch {
+    toast('❌ Network error'); btn.disabled = false; btn.textContent = 'Mark as Attended';
+  }
+}
+
+/* ══════════════════════
+   HELPERS
+══════════════════════ */
+function ago(ds) {
+  const s = (Date.now() - new Date(ds)) / 1000;
+  if (s < 60)   return `${Math.round(s)}s ago`;
+  if (s < 3600) return `${Math.round(s/60)}m ago`;
+  return `${Math.round(s/3600)}h ago`;
+}
+
+function fmtTime(ds) {
+  return new Date(ds).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function updateBadge(id, n) {
+  const el = document.getElementById(id);
+  el.textContent = n;
+  el.classList.toggle('show', n > 0);
+}
+
+function fadeOut(id) {
+  const el = document.getElementById(id);
+  if (el) { el.style.transition = '0.3s'; el.style.opacity = '0'; el.style.transform = 'scale(0.95)'; setTimeout(() => el.remove(), 320); }
+}
+
+/* ══════════════════════
+   POLLING
+══════════════════════ */
+function startPolling() {
+  fetchOrders(); fetchCalls();
+  setInterval(fetchOrders, 5000);
+  setInterval(fetchCalls,  4000);
+}
+
+/* Refresh buttons */
+document.getElementById('refreshOrders').addEventListener('click', () => fetchOrders());
+document.getElementById('refreshCalls').addEventListener('click', () => fetchCalls());
+
+/* ══════════════════════
+   PWA INSTALL
+══════════════════════ */
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPWA = e;
+  document.getElementById('installBanner').style.display = 'flex';
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPWA) return;
+  deferredPWA.prompt();
+  await deferredPWA.userChoice;
+  deferredPWA = null;
+  document.getElementById('installBanner').style.display = 'none';
+});
+
+document.getElementById('dismissInstall').addEventListener('click', () => {
+  document.getElementById('installBanner').style.display = 'none';
+});
+</script>
+
+</body>
+</html>
