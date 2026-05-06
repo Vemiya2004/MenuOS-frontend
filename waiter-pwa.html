@@ -949,10 +949,10 @@ async function doLogin() {
     err.style.display = 'none';
 
     try {
-        const res  = await fetch(`${API}/admin/waiter-auth/login`, {
+        const res  = await fetch(`${API}/admin/login`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ username: u, password: p })
+            body:    JSON.stringify({ `username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}` })
         });
         const data = await res.json();
 
