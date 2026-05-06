@@ -952,7 +952,7 @@ async function doLogin() {
         const res  = await fetch(`${API}/admin/public/waiter-auth/login`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ username: u, password: p })
+            body:    `username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`
         });
         const data = await res.json();
 
