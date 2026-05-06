@@ -870,6 +870,13 @@ let lastCalls   = 0;
 let deferredPWA = null;
 let audioCtx    = null;
 
+function waiterHeaders() {
+    return {
+        'Content-Type':   'application/json',
+        'X-Waiter-Token': sessionStorage.getItem('wp_token') || ''
+    };
+}
+
 /* ══════════════════════
    AUDIO
 ══════════════════════ */
@@ -926,37 +933,46 @@ document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('lp').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
 
 async function doLogin() {
-  const u   = document.getElementById('lu').value.trim();
-  const p   = document.getElementById('lp').value;
-  const btn = document.getElementById('loginBtn');
-  const err = document.getElementById('loginErr');
+    const u   = document.getElementById('lu').value.trim();
+    const p   = document.getElementById('lp').value;
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('loginErr');
 
-  if (!u || !p) { err.textContent = 'Enter username and password.'; err.style.display = 'block'; return; }
-
-  btn.textContent = 'Signing in…'; btn.disabled = true;
-  err.style.display = 'none';
-
-  try {
-    const res = await fetch(`${API}/admin/login`, {
-      method:      'POST',
-      credentials: 'include',
-      headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body:        `username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`
-    });
-
-    /* Success = redirected away from /login page */
-    if (res.ok && !res.url.includes('/login')) {
-      sessionStorage.setItem('wp_auth', '1');
-      showApp();
-    } else {
-      err.style.display = 'block';
+    if (!u || !p) {
+        err.textContent = 'Enter username and password.';
+        err.style.display = 'block';
+        return;
     }
-  } catch {
-    err.textContent = 'Network error. Check connection.';
-    err.style.display = 'block';
-  }
 
-  btn.textContent = 'Sign In →'; btn.disabled = false;
+    btn.textContent = 'Signing in…';
+    btn.disabled = true;
+    err.style.display = 'none';
+
+    try {
+        const res  = await fetch(`${API}/admin/public/waiter-auth/login`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+            sessionStorage.setItem('wp_auth',         '1');
+            sessionStorage.setItem('wp_token',        data.token);
+            sessionStorage.setItem('wp_user_id',      data.user_id);
+            sessionStorage.setItem('wp_display_name', data.display_name);
+            showApp();
+        } else {
+            err.textContent    = data.error || 'Incorrect username or password.';
+            err.style.display  = 'block';
+        }
+    } catch {
+        err.textContent   = 'Network error. Check connection.';
+        err.style.display = 'block';
+    }
+
+    btn.textContent = 'Sign In →';
+    btn.disabled    = false;
 }
 
 /* ══════════════════════
@@ -1085,8 +1101,11 @@ async function updateOrderStats() {
 async function approveOrder(id, btn) {
   btn.disabled = true; btn.innerHTML = 'Approving…';
   try {
-    const res = await fetch(`${API}/admin/api/waiter-tickets/${id}/approve`,
-                            { method: 'PUT', credentials: 'include' });
+    const res = await fetch(`${API}/admin/api/waiter-tickets/${id}/approve`, {
+            method:  'PUT',
+            headers: waiterHeaders(),   // ← token සමගින්
+            credentials: 'include'
+    });
     if (res.ok) {
       toast('✓ Order approved!');
       fadeOut(`oc-${id}`);
@@ -1217,8 +1236,11 @@ function renderCalls(pending, attended) {
 async function attendCall(id, btn) {
   btn.disabled = true; btn.textContent = 'Marking…';
   try {
-    const res = await fetch(`${API}/admin/api/waiter-calls/${id}/attend`,
-                            { method: 'PUT', credentials: 'include' });
+    const res = await fetch(`${API}/admin/api/waiter-calls/${id}/attend`, {
+            method:  'PUT',
+            headers: waiterHeaders(),   // ← token සමගින්
+            credentials: 'include'
+    });
     if (res.ok) {
       toast('✓ Marked as attended');
       fadeOut(`cc-${id}`);
