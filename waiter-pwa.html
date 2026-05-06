@@ -952,7 +952,7 @@ async function doLogin() {
         const res  = await fetch(`${API}/admin/login`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    `username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}` 
+            body:    JSON.stringify({ username: u, password: p })
         });
         const data = await res.json();
 
