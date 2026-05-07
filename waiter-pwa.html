@@ -1011,8 +1011,10 @@ function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 ══════════════════════ */
 async function fetchOrders() {
   try {
-    const res = await fetch(`${API}/admin/api/waiter-tickets?status=pending_waiter`,
-                            { credentials: 'include' });
+    const res = await fetch(`${API}/admin/api/waiter-tickets?status=pending_waiter`, { 
+      headers: waiterHeaders(),    // ← with token 
+      credentials: 'include' 
+    });
     if (res.redirected || res.status === 302) { sessionStorage.clear(); location.reload(); return; }
     const data = await res.json();
     if (!Array.isArray(data)) return;
