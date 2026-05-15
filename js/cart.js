@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function loadCart() {
     const savedCart = localStorage.getItem(getCartKey());
     cart = savedCart ? JSON.parse(savedCart) : [];
-    console.log('✅ Cart loaded ${tableNumber}:', cart.length, 'unique items');
+    console.log(`✅ Cart loaded ${tableNumber}:`, cart.length, 'unique items');
 }
 
 function saveCart() {
