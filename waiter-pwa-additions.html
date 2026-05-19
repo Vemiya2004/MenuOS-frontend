@@ -1,0 +1,334 @@
+<!-- ================================================================
+     WAITER-PWA.HTML  ADDITIONS
+     
+     STEP 1: Add this CSS block inside the existing <style> tag
+     STEP 2: Add the Reject Modal HTML before the closing </body>
+     STEP 3: Replace the renderOrders() function JS (reject button added)
+     STEP 4: Add the rejectOrder() and showRejectModal() JS functions
+     ================================================================ -->
+
+
+<!-- ═══════════ STEP 1 — CSS (add inside <style> tag) ═══════════ -->
+<style>
+/* ── Reject button ── */
+.btn-reject {
+  flex: 1; padding: 11px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none; border-radius: 11px;
+  color: #fff; font-size: 13px; font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 14px rgba(239,68,68,0.25);
+}
+.btn-reject:active  { opacity: 0.85; }
+.btn-reject:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Reject Reason Modal ── */
+.reject-modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+  padding: 20px;
+}
+.reject-modal-overlay.open {
+  opacity: 1; pointer-events: all;
+}
+
+.reject-modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 28px 24px 24px;
+  width: 100%; max-width: 400px;
+  transform: translateY(30px) scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.34,1.3,0.64,1);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.reject-modal-overlay.open .reject-modal-box {
+  transform: translateY(0) scale(1);
+}
+
+.rm-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 18px;
+}
+.rm-icon {
+  width: 42px; height: 42px;
+  background: rgba(239,68,68,0.15);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rm-title {
+  font-size: 17px; font-weight: 800; color: var(--text);
+}
+.rm-subtitle {
+  font-size: 12px; color: var(--text3); margin-top: 2px;
+}
+
+/* Quick suggestion chips */
+.rm-suggestions {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 14px;
+}
+.rm-chip {
+  padding: 6px 13px;
+  background: var(--surface2);
+  border: 1.5px solid var(--border2);
+  border-radius: 20px;
+  font-size: 12px; font-weight: 600; color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.rm-chip:hover, .rm-chip.selected {
+  border-color: var(--red);
+  color: var(--red);
+  background: var(--red-bg);
+}
+
+.rm-label {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--text3); margin-bottom: 8px;
+}
+
+.rm-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  color: var(--text); font-size: 14px;
+  font-family: 'Outfit', sans-serif;
+  padding: 12px 14px;
+  resize: none; outline: none;
+  transition: border-color 0.2s;
+  min-height: 80px;
+  margin-bottom: 16px;
+}
+.rm-textarea:focus {
+  border-color: var(--red);
+}
+.rm-textarea::placeholder { color: var(--text3); }
+
+.rm-actions {
+  display: flex; gap: 10px;
+}
+.rm-cancel {
+  flex: 1; padding: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  color: var(--text2); font-size: 13px; font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer; transition: border-color 0.2s;
+}
+.rm-cancel:hover { border-color: var(--text3); }
+
+.rm-submit {
+  flex: 2; padding: 12px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none; border-radius: 11px;
+  color: #fff; font-size: 13px; font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  cursor: pointer; transition: opacity 0.2s;
+  box-shadow: 0 4px 14px rgba(239,68,68,0.3);
+}
+.rm-submit:active  { opacity: 0.85; }
+.rm-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+
+
+<!-- ═══════════ STEP 2 — Reject Reason Modal HTML ═══════════
+     Add this block just before </body> tag                   -->
+
+<div class="reject-modal-overlay" id="rejectModal">
+  <div class="reject-modal-box">
+
+    <div class="rm-header">
+      <div class="rm-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+             stroke="#ef4444" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M15 9L9 15M9 9l6 6"/>
+        </svg>
+      </div>
+      <div>
+        <div class="rm-title">Reject Order</div>
+        <div class="rm-subtitle" id="rmOrderLabel">Table — Ticket</div>
+      </div>
+    </div>
+
+    <!-- Quick suggestion chips -->
+    <div class="rm-label">Quick Reasons</div>
+    <div class="rm-suggestions">
+      <div class="rm-chip" onclick="selectChip(this, 'Out of stock')">🚫 Out of stock</div>
+      <div class="rm-chip" onclick="selectChip(this, 'Item not available at this time')">⏰ Not available now</div>
+      <div class="rm-chip" onclick="selectChip(this, 'Kitchen is closed')">🔒 Kitchen closed</div>
+      <div class="rm-chip" onclick="selectChip(this, 'Ingredient shortage')">🥦 Ingredient shortage</div>
+      <div class="rm-chip" onclick="selectChip(this, 'Order limit reached for this item')">📦 Limit reached</div>
+      <div class="rm-chip" onclick="selectChip(this, 'Please contact the waiter for assistance')">👋 Contact waiter</div>
+    </div>
+
+    <!-- Custom reason text area -->
+    <div class="rm-label">Or Write Custom Reason</div>
+    <textarea class="rm-textarea" id="rmReasonText"
+              placeholder="Type a reason to send to the customer…"
+              maxlength="300"></textarea>
+
+    <div class="rm-actions">
+      <button class="rm-cancel" onclick="closeRejectModal()">Cancel</button>
+      <button class="rm-submit" id="rmSubmitBtn" onclick="submitReject()">
+        ✕ Send Rejection
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════ STEP 3 — JavaScript additions ═══════════
+     Add these functions inside the <script> block,
+     alongside the existing approveOrder() function.          -->
+
+<script>
+/* ── Reject modal state ─────────────────────────────────────── */
+let _rejectTargetId = null;
+
+function showRejectModal(id) {
+  const t = orders.find(x => x.id === id);
+  if (!t) return;
+  _rejectTargetId = id;
+
+  // Label
+  document.getElementById('rmOrderLabel').textContent =
+    `Table ${t.table_number} — ${t.ticket_code}`;
+
+  // Clear previous input
+  document.getElementById('rmReasonText').value = '';
+  document.querySelectorAll('.rm-chip').forEach(c => c.classList.remove('selected'));
+
+  // Re-enable submit
+  const btn = document.getElementById('rmSubmitBtn');
+  btn.disabled = false;
+  btn.textContent = '✕ Send Rejection';
+
+  document.getElementById('rejectModal').classList.add('open');
+}
+
+function closeRejectModal() {
+  document.getElementById('rejectModal').classList.remove('open');
+  _rejectTargetId = null;
+}
+
+function selectChip(chip, text) {
+  document.querySelectorAll('.rm-chip').forEach(c => c.classList.remove('selected'));
+  chip.classList.add('selected');
+  document.getElementById('rmReasonText').value = text;
+}
+
+async function submitReject() {
+  if (!_rejectTargetId) return;
+
+  const reason = document.getElementById('rmReasonText').value.trim();
+  if (!reason) {
+    toast('⚠️ Please enter or select a reason', 2500);
+    return;
+  }
+
+  const btn = document.getElementById('rmSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch(`${API}/admin/api/waiter-tickets/${_rejectTargetId}/reject`, {
+      method:  'PUT',
+      headers: waiterHeaders(),
+      credentials: 'include',
+      body: JSON.stringify({ reason })
+    });
+
+    if (res.ok) {
+      toast('✕ Order rejected');
+      closeRejectModal();
+      document.getElementById('overlay').classList.remove('open');
+      fadeOut(`oc-${_rejectTargetId}`);
+      setTimeout(fetchOrders, 350);
+    } else {
+      toast('❌ Rejection failed');
+      btn.disabled = false;
+      btn.textContent = '✕ Send Rejection';
+    }
+  } catch {
+    toast('❌ Network error');
+    btn.disabled = false;
+    btn.textContent = '✕ Send Rejection';
+  }
+}
+
+/* Close overlay click-outside */
+document.getElementById('rejectModal').addEventListener('click', function(e) {
+  if (e.target === this) closeRejectModal();
+});
+</script>
+
+
+<!-- ═══════════ STEP 4 — Update renderOrders() function ═══════════
+     Find the existing renderOrders() in waiter-pwa.html and replace
+     the oc-actions div inside the orders.map() template literal.
+     
+     OLD code:
+        <div class="oc-actions">
+          <button class="btn-detail" onclick="openSheet(${t.id})">Details</button>
+          <button class="btn-approve" onclick="approveOrder(${t.id}, this)">
+            <svg ...></svg>
+            Approve
+          </button>
+        </div>
+
+     REPLACE with:                                                     -->
+
+<!--
+        <div class="oc-actions">
+          <button class="btn-detail" onclick="openSheet(${t.id})">Details</button>
+          <button class="btn-reject" onclick="showRejectModal(${t.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+            Reject
+          </button>
+          <button class="btn-approve" onclick="approveOrder(${t.id}, this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            Approve
+          </button>
+        </div>
+-->
+
+<!-- ═══════════ STEP 5 — Update sheet-approve in openSheet() ═══════════
+     Inside the openSheet() function, after setting sheetApproveBtn.onclick,
+     ADD this block to also wire the Reject button in the detail sheet:
+     
+     // Find or create reject button in sheet
+     let sheetRejectBtn = document.getElementById('sheetRejectBtn');
+     if (!sheetRejectBtn) {
+       sheetRejectBtn = document.createElement('button');
+       sheetRejectBtn.id = 'sheetRejectBtn';
+       sheetRejectBtn.className = 'sheet-approve';
+       sheetRejectBtn.style.cssText = 'background:linear-gradient(135deg,#ef4444,#dc2626);margin-top:10px;';
+       document.querySelector('.sheet').appendChild(sheetRejectBtn);
+     }
+     sheetRejectBtn.textContent = '✕ Reject Order';
+     sheetRejectBtn.onclick = () => {
+       document.getElementById('overlay').classList.remove('open');
+       setTimeout(() => showRejectModal(id), 200);
+     };
+-->
