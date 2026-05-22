@@ -244,6 +244,11 @@
         function showRejected(reason) {
             clearInterval(pollInterval);
 
+            // Clear the cart for this table
+            if (tableNumber) {
+                localStorage.removeItem(`cart_table_${tableNumber}`);
+            }
+
             // Display reason (fallback if empty)
             const reasonText = reason && reason.trim()
                 ? reason
