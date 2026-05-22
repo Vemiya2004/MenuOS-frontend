@@ -458,6 +458,116 @@
     .btn-approve:active { opacity: 0.85; }
     .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* ── Reject button ── */
+    .btn-reject {
+      flex: 1; padding: 11px;
+      background: linear-gradient(135deg, var(--red), #dc2626);
+      border: none; border-radius: 11px;
+      color: #fff; font-size: 13px; font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: opacity 0.2s;
+      box-shadow: 0 4px 14px rgba(239,68,68,0.25);
+    }
+    .btn-reject:active  { opacity: 0.85; }
+    .btn-reject:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Reject Reason Modal ── */
+    .reject-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+      padding: 20px;
+    }
+    .reject-overlay.open { opacity: 1; pointer-events: all; }
+
+    .reject-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 28px 24px 24px;
+      width: 100%; max-width: 400px;
+      transform: translateY(30px) scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.34,1.3,0.64,1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .reject-overlay.open .reject-box { transform: translateY(0) scale(1); }
+
+    .rb-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .rb-icon {
+      width: 42px; height: 42px;
+      background: var(--red-bg);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .rb-title  { font-size: 17px; font-weight: 800; color: var(--text); }
+    .rb-sub    { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+    .rb-chips  { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .rb-chip {
+      padding: 6px 13px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border2);
+      border-radius: 20px;
+      font-size: 12px; font-weight: 600; color: var(--text2);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .rb-chip:hover, .rb-chip.sel {
+      border-color: var(--red); color: var(--red); background: var(--red-bg);
+    }
+
+    .rb-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text3); margin-bottom: 8px;
+    }
+    .rb-textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: var(--text); font-size: 14px;
+      font-family: 'Outfit', sans-serif;
+      padding: 12px 14px; resize: none; outline: none;
+      transition: border-color 0.2s; min-height: 80px; margin-bottom: 16px;
+    }
+    .rb-textarea:focus { border-color: var(--red); }
+    .rb-textarea::placeholder { color: var(--text3); }
+
+    .rb-actions { display: flex; gap: 10px; }
+    .rb-cancel {
+      flex: 1; padding: 12px;
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 11px; color: var(--text2); font-size: 13px; font-weight: 700;
+      font-family: 'Outfit', sans-serif; cursor: pointer;
+    }
+    .rb-submit {
+      flex: 2; padding: 12px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none; border-radius: 11px;
+      color: #fff; font-size: 13px; font-weight: 800;
+      font-family: 'Outfit', sans-serif; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(239,68,68,0.3); transition: opacity 0.2s;
+    }
+    .rb-submit:active { opacity: 0.85; }
+    .rb-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Sheet reject button */
+    .sheet-reject {
+      width: 100%; margin-top: 10px; padding: 14px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border: none; border-radius: 14px;
+      color: #fff; font-size: 15px; font-weight: 800;
+      font-family: 'Outfit', sans-serif; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(239,68,68,0.25); transition: opacity 0.2s;
+    }
+    .sheet-reject:active { opacity: 0.85; }
+
     /* ══════════════════════════════════
        CALLS TAB
     ══════════════════════════════════ */
@@ -842,6 +952,49 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     REJECT REASON MODAL
+════════════════════════════════════════ -->
+<div class="reject-overlay" id="rejectOverlay">
+  <div class="reject-box">
+    <div class="rb-header">
+      <div class="rb-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+             stroke="#ef4444" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M15 9L9 15M9 9l6 6"/>
+        </svg>
+      </div>
+      <div>
+        <div class="rb-title">Reject Order</div>
+        <div class="rb-sub" id="rbOrderLabel">Table — Ticket</div>
+      </div>
+    </div>
+
+    <div class="rb-label">Quick Reasons</div>
+    <div class="rb-chips">
+      <div class="rb-chip" onclick="selectChip(this,'Out of stock')">🚫 Out of stock</div>
+      <div class="rb-chip" onclick="selectChip(this,'Not available at this time')">⏰ Not available now</div>
+      <div class="rb-chip" onclick="selectChip(this,'Kitchen is closed')">🔒 Kitchen closed</div>
+      <div class="rb-chip" onclick="selectChip(this,'Ingredient shortage')">🥦 Ingredient shortage</div>
+      <div class="rb-chip" onclick="selectChip(this,'Order limit reached')">📦 Limit reached</div>
+      <div class="rb-chip" onclick="selectChip(this,'Please contact the waiter')">👋 Contact waiter</div>
+    </div>
+
+    <div class="rb-label">Or Type Custom Reason</div>
+    <textarea class="rb-textarea" id="rbReasonText"
+              placeholder="Type a reason for the customer…"
+              maxlength="300"></textarea>
+
+    <div class="rb-actions">
+      <button class="rb-cancel" onclick="closeRejectModal()">Cancel</button>
+      <button class="rb-submit" id="rbSubmitBtn" onclick="submitReject()">
+        ✕ Send Rejection
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast"></div>
 
@@ -869,13 +1022,6 @@ let lastOrders  = 0;
 let lastCalls   = 0;
 let deferredPWA = null;
 let audioCtx    = null;
-
-function waiterHeaders() {
-    return {
-        'Content-Type':   'application/json',
-        'X-Waiter-Token': sessionStorage.getItem('wp_token') || ''
-    };
-}
 
 /* ══════════════════════
    AUDIO
@@ -932,122 +1078,38 @@ function toast(msg, dur = 2800) {
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('lp').addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
 
-/* ══════════════════════
-   SERVICE WORKER + PUSH
-══════════════════════ */
-async function registerSW() {
-    if (!('serviceWorker' in navigator)) return null;
-    try {
-        const reg = await navigator.serviceWorker.register('/waiter-sw.js', { scope: '/' });
-        console.log('[PWA] SW registered');
-        return reg;
-    } catch(e) { console.error('[PWA] SW failed:', e); return null; }
-}
-
-async function requestNotifPermission() {
-    if (!('Notification' in window)) return false;
-    if (Notification.permission === 'granted') return true;
-    if (Notification.permission === 'denied') return false;
-    return (await Notification.requestPermission()) === 'granted';
-}
-
-async function setupSWPolling() {
-    try {
-        const sw = await navigator.serviceWorker.ready;
-        // Trigger SW poll every 30s (works when PWA is in background)
-        setInterval(() => sw.active?.postMessage({ type: 'POLL_NOW' }), 30000);
-        // Periodic Background Sync (Chrome Android)
-        try {
-            const p = await navigator.permissions.query({ name: 'periodic-background-sync' });
-            if (p.state === 'granted') {
-                await sw.periodicSync.register('waiter-poll', { minInterval: 30000 });
-            }
-        } catch(e) {}
-    } catch(e) {}
-}
-
 async function doLogin() {
-    const u   = document.getElementById('lu').value.trim();
-    const p   = document.getElementById('lp').value;
-    const btn = document.getElementById('loginBtn');
-    const err = document.getElementById('loginErr');
+  const u   = document.getElementById('lu').value.trim();
+  const p   = document.getElementById('lp').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
 
-    if (!u || !p) {
-        err.textContent = 'Enter username and password.';
-        err.style.display = 'block';
-        return;
+  if (!u || !p) { err.textContent = 'Enter username and password.'; err.style.display = 'block'; return; }
+
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  err.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/admin/login`, {
+      method:      'POST',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:        `username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`
+    });
+
+    /* Success = redirected away from /login page */
+    if (res.ok && !res.url.includes('/login')) {
+      sessionStorage.setItem('wp_auth', '1');
+      showApp();
+    } else {
+      err.style.display = 'block';
     }
+  } catch {
+    err.textContent = 'Network error. Check connection.';
+    err.style.display = 'block';
+  }
 
-    btn.textContent = 'Signing in…';
-    btn.disabled = true;
-    err.style.display = 'none';
-
-    try {
-        const res  = await fetch(`${API}/admin/public/waiter-auth/login`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ username: u, password: p })
-        });
-        const data = await res.json();
-
-        // ── Time restriction (7AM–10PM) ──
-        if (res.status === 403 && data.time_restricted) {
-            err.innerHTML = `
-                <div style="font-size:14px;font-weight:700;margin-bottom:4px;">🕐 Login Not Available</div>
-                <div style="font-size:12px;opacity:0.85;">${data.error}</div>
-                <div style="font-size:11px;margin-top:6px;opacity:0.65;">Shift hours: 7:00 AM – 10:00 PM</div>`;
-            err.style.display = 'block';
-            btn.textContent = 'Sign In →';
-            btn.disabled = false;
-            return;
-        }
-
-        if (res.ok && data.success) {
-            sessionStorage.setItem('wp_auth',         '1');
-            sessionStorage.setItem('wp_token',        data.token);
-            sessionStorage.setItem('wp_user_id',      data.user_id);
-            sessionStorage.setItem('wp_display_name', data.display_name);
-
-            // ── Auto-logout at 10PM ──
-            const ms = data.logout_in_ms || 0;
-            if (ms > 0) {
-                // 5-min warning notification
-                const warnMs = ms - 5 * 60 * 1000;
-                if (warnMs > 0) {
-                    setTimeout(async () => {
-                        const granted = await requestNotifPermission();
-                        if (granted) new Notification('⏰ Shift ending soon', {
-                            body: 'You will be automatically logged out in 5 minutes (10:00 PM).',
-                            icon: '/favicon1/restaurant_logo-favicon.png'
-                        });
-                    }, warnMs);
-                }
-                // Hard logout
-                setTimeout(() => {
-                    sessionStorage.clear();
-                    alert('⏰ Shift ended. You have been logged out (10:00 PM).');
-                    location.reload();
-                }, ms);
-            }
-
-            // ── Notifications + SW ──
-            await requestNotifPermission();
-            const swReg = await registerSW();
-            if (swReg) await setupSWPolling();
-
-            showApp();
-
-        } else {
-            err.textContent   = data.error || 'Incorrect username or password.';
-            err.style.display = 'block';
-        }
-    } catch {
-        err.textContent   = 'Network error. Check connection.';
-        err.style.display = 'block';
-    }
-
-    btn.textContent = 'Sign In →';
-    btn.disabled    = false;
+  btn.textContent = 'Sign In →'; btn.disabled = false;
 }
 
 /* ══════════════════════
@@ -1061,11 +1123,7 @@ function showApp() {
   startPolling();
 }
 
-if (sessionStorage.getItem('wp_auth')) {
-    showApp();
-    // Re-init SW for returning sessions
-    registerSW().then(reg => { if (reg) setupSWPolling(); });
-}
+if (sessionStorage.getItem('wp_auth')) showApp();
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
   sessionStorage.clear(); location.reload();
@@ -1090,10 +1148,8 @@ function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 ══════════════════════ */
 async function fetchOrders() {
   try {
-    const res = await fetch(`${API}/admin/api/waiter-tickets?status=pending_waiter`, { 
-      headers: waiterHeaders(),    // ← with token 
-      credentials: 'include' 
-    });
+    const res = await fetch(`${API}/admin/api/waiter-tickets?status=pending_waiter`,
+                            { credentials: 'include' });
     if (res.redirected || res.status === 302) { sessionStorage.clear(); location.reload(); return; }
     const data = await res.json();
     if (!Array.isArray(data)) return;
@@ -1153,6 +1209,13 @@ function renderOrders() {
         <div class="oc-items">${preview}${more}</div>
         <div class="oc-actions">
           <button class="btn-detail" onclick="openSheet(${t.id})">Details</button>
+          <button class="btn-reject" onclick="showRejectModal(${t.id})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+            Reject
+          </button>
           <button class="btn-approve" onclick="approveOrder(${t.id}, this)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
@@ -1182,11 +1245,8 @@ async function updateOrderStats() {
 async function approveOrder(id, btn) {
   btn.disabled = true; btn.innerHTML = 'Approving…';
   try {
-    const res = await fetch(`${API}/admin/api/waiter-tickets/${id}/approve`, {
-            method:  'PUT',
-            headers: waiterHeaders(),   // ← token සමගින්
-            credentials: 'include'
-    });
+    const res = await fetch(`${API}/admin/api/waiter-tickets/${id}/approve`,
+                            { method: 'PUT', credentials: 'include' });
     if (res.ok) {
       toast('✓ Order approved!');
       fadeOut(`oc-${id}`);
@@ -1222,12 +1282,102 @@ function openSheet(id) {
   ab.textContent = '✓ Approve Order';
   ab.onclick = () => { ab.textContent = 'Approving…'; approveOrder(id, ab); };
 
+  // ── Reject button in sheet ──
+  let sheetRejectBtn = document.getElementById('sheetRejectBtn');
+  if (!sheetRejectBtn) {
+    sheetRejectBtn = document.createElement('button');
+    sheetRejectBtn.id        = 'sheetRejectBtn';
+    sheetRejectBtn.className = 'sheet-reject';
+    ab.after(sheetRejectBtn);
+  }
+  sheetRejectBtn.textContent = '✕ Reject Order';
+  sheetRejectBtn.onclick = () => {
+    document.getElementById('overlay').classList.remove('open');
+    setTimeout(() => showRejectModal(id), 200);
+  };
+
   document.getElementById('overlay').classList.add('open');
 }
 
 document.getElementById('overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('overlay'))
     document.getElementById('overlay').classList.remove('open');
+});
+
+/* ══════════════════════
+   REJECT MODAL
+══════════════════════ */
+let _rejectId = null;
+
+function showRejectModal(id) {
+  const t = orders.find(x => x.id === id);
+  if (!t) return;
+  _rejectId = id;
+
+  document.getElementById('rbOrderLabel').textContent =
+    `Table ${t.table_number} — ${t.ticket_code}`;
+  document.getElementById('rbReasonText').value = '';
+  document.querySelectorAll('.rb-chip').forEach(c => c.classList.remove('sel'));
+
+  const btn = document.getElementById('rbSubmitBtn');
+  btn.disabled    = false;
+  btn.textContent = '✕ Send Rejection';
+
+  document.getElementById('rejectOverlay').classList.add('open');
+}
+
+function closeRejectModal() {
+  document.getElementById('rejectOverlay').classList.remove('open');
+  _rejectId = null;
+}
+
+function selectChip(chip, text) {
+  document.querySelectorAll('.rb-chip').forEach(c => c.classList.remove('sel'));
+  chip.classList.add('sel');
+  document.getElementById('rbReasonText').value = text;
+}
+
+async function submitReject() {
+  if (!_rejectId) return;
+
+  const reason = document.getElementById('rbReasonText').value.trim();
+  if (!reason) {
+    toast('⚠️ Please select or type a reason', 2500);
+    return;
+  }
+
+  const btn = document.getElementById('rbSubmitBtn');
+  btn.disabled    = true;
+  btn.textContent = 'Sending…';
+
+  try {
+    const res = await fetch(`${API}/admin/api/waiter-tickets/${_rejectId}/reject`, {
+      method:      'PUT',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ reason })
+    });
+
+    if (res.ok) {
+      toast('✕ Order rejected');
+      closeRejectModal();
+      fadeOut(`oc-${_rejectId}`);
+      setTimeout(fetchOrders, 350);
+    } else {
+      toast('❌ Rejection failed');
+      btn.disabled    = false;
+      btn.textContent = '✕ Send Rejection';
+    }
+  } catch {
+    toast('❌ Network error');
+    btn.disabled    = false;
+    btn.textContent = '✕ Send Rejection';
+  }
+}
+
+// Close reject modal on overlay click
+document.getElementById('rejectOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('rejectOverlay')) closeRejectModal();
 });
 
 /* ══════════════════════
@@ -1317,11 +1467,8 @@ function renderCalls(pending, attended) {
 async function attendCall(id, btn) {
   btn.disabled = true; btn.textContent = 'Marking…';
   try {
-    const res = await fetch(`${API}/admin/api/waiter-calls/${id}/attend`, {
-            method:  'PUT',
-            headers: waiterHeaders(),   // ← token සමගින්
-            credentials: 'include'
-    });
+    const res = await fetch(`${API}/admin/api/waiter-calls/${id}/attend`,
+                            { method: 'PUT', credentials: 'include' });
     if (res.ok) {
       toast('✓ Marked as attended');
       fadeOut(`cc-${id}`);
