@@ -232,7 +232,7 @@ function createConfirmationModal() {
         .custom-modal { display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
             z-index:10000;opacity:0;transition:opacity .3s;backdrop-filter:blur(5px); }
         .custom-modal.active { display:flex;align-items:center;justify-content:center;opacity:1; }
-        .custom-modal-content { background:white;padding:40px;border-radius:20px;text-align:center;
+        .custom-modal-content { padding:40px;border-radius:20px;text-align:center;
             max-width:400px;width:90%;transform:scale(.7);
             transition:transform .3s cubic-bezier(.68,-.55,.265,1.55);box-shadow:0 20px 60px rgba(0,0,0,.3); }
         .custom-modal.active .custom-modal-content { transform:scale(1); }
@@ -244,7 +244,7 @@ function createConfirmationModal() {
             font-size:16px;font-weight:600;cursor:pointer;transition:all .2s; }
         .cancel-btn  { background:#f3f4f6;color:#374151; }
         .cancel-btn:hover  { background:#e5e7eb;transform:translateY(-2px); }
-        .confirm-btn { background:linear-gradient(135deg,#2D7A7C,#1f5456);color:white; }
+        .confirm-btn { background:linear-gradient(135deg,#2D7A7C,#1f5456); }
         .confirm-btn:hover { transform:translateY(-2px);box-shadow:0 10px 25px rgba(45,122,124,.3); }`;
     document.head.appendChild(style);
 }
