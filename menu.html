@@ -1076,14 +1076,59 @@ window.updateCartBadge = function() {
 };
 
 // ═══════════════════════════════════════════════════════
-// SHOW/HIDE LOADING
+// SHOW/HIDE LOADING  — force grid visible after render
+// menu.js's local showLoading sets display:'grid' which is
+// fine, but we also patch it here to ensure 'block' works.
+// The key fix: after renderMenuItems runs, we force display.
 // ═══════════════════════════════════════════════════════
 window.showLoading = function(show) {
     const spinner = document.getElementById('loadingSpinner');
     const grid    = document.getElementById('menuGrid');
     if (!spinner || !grid) return;
     spinner.style.display = show ? 'block' : 'none';
+    // Use 'block' not 'grid' — our sections layout is block-based
     grid.style.display    = show ? 'none'  : 'block';
+};
+
+// ── Patch: after menu.js loadData() completes, ensure grid is visible ──
+// menu.js calls local showLoading(false) which sets display:'grid'.
+// We use MutationObserver to catch when grid gets content and force block.
+(function() {
+    const grid = document.getElementById('menuGrid');
+    if (!grid) return;
+    const obs = new MutationObserver(() => {
+        if (grid.innerHTML.trim() && grid.style.display !== 'block') {
+            grid.style.display = 'block';
+        }
+    });
+    obs.observe(grid, { childList: true });
+})();
+
+// ── Cart clear on token expiry ──────────────────────────
+// menu.js's showSessionExpiredScreen is a LOCAL function —
+// we can't override it. Instead, we patch validateToken's
+// result by intercepting the fetch response from
+// /api/validate-token. If invalid → clear all carts NOW.
+const _origFetch = window.fetch;
+window.fetch = async function(...args) {
+    const result = await _origFetch.apply(this, args);
+    // Only intercept validate-token responses
+    if (typeof args[0] === 'string' && args[0].includes('validate-token')) {
+        const clone = result.clone();
+        clone.json().then(data => {
+            if (data && data.valid === false) {
+                // Token invalid → clear ALL cart keys immediately
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (k && k.startsWith('cart_table_')) keysToRemove.push(k);
+                }
+                keysToRemove.forEach(k => localStorage.removeItem(k));
+                console.log('🧹 Cart cleared due to token expiry');
+            }
+        }).catch(() => {});
+    }
+    return result;
 };
 
 // ═══════════════════════════════════════════════════════
