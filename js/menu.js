@@ -761,21 +761,3 @@ function setupEventListeners() {
         addBtn.addEventListener('click', addToCart);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
