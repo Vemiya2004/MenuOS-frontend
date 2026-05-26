@@ -69,5 +69,30 @@
 </div>
 
 <script src="js/cart.js"></script>
+<script>
+// ── Patch: clear ALL cart keys on session expiry ───────
+// cart.js's showSessionExpiredScreen is a local function,
+// but it calls localStorage.removeItem(getCartKey()) which
+// only removes current table. We patch it after load.
+(function patchCartExpiry() {
+    // Wait for cart.js to define its functions, then patch
+    const params = new URLSearchParams(window.location.search);
+    const tbl = params.get('table');
+    // Aggressively clear all cart keys when page detects expiry
+    const origBody = document.body.innerHTML;
+    const bodyObserver = new MutationObserver(() => {
+        // If session expired screen appears (red circle), clear all carts
+        const redDiv = document.querySelector('[style*="ef4444"]');
+        if (redDiv && tbl) {
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const k = localStorage.key(i);
+                if (k && k.startsWith('cart_table_')) localStorage.removeItem(k);
+            }
+            bodyObserver.disconnect();
+        }
+    });
+    bodyObserver.observe(document.body, { childList: true, subtree: false });
+})();
+</script>
 </body>
 </html>
