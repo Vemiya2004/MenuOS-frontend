@@ -34,8 +34,14 @@ function getImageUrl(imagePath, category) {
 // =====================================================
 // STATE
 // =====================================================
-let categories = [];
-let menuItems = [];
+// STATE — exposed to window so menu.html overrides can read
+// =====================================================
+window.categories        = [];
+window.menuItems         = [];
+window.selectedCategory  = 'All';
+// local aliases used by rest of menu.js
+let categories   = window.categories;
+let menuItems    = window.menuItems;
 
 // =====================================================
 // OFFER BANNERS
@@ -144,7 +150,7 @@ async function applyBannerFilter(index) {
         }).map(item => mapMenuItem(item));
 
         // Update selected category display
-        selectedCategory = linked.length === 1 ? linked[0] : 'Banner';
+        selectedCategory = window.selectedCategory = linked.length === 1 ? linked[0] : 'Banner';
 
     } else if (banner.link_type === 'food') {
         // Load all menu then filter by food IDs
@@ -152,7 +158,7 @@ async function applyBannerFilter(index) {
         const all = await res.json();
         const ids = linked.map(Number);
         menuItems = all.filter(item => ids.includes(item.id)).map(item => mapMenuItem(item));
-        selectedCategory = 'Banner';
+        selectedCategory = window.selectedCategory = 'Banner';
     }
 
     renderCategories();
@@ -186,7 +192,7 @@ function mapMenuItem(item) {
 }
 
 
-let selectedCategory = 'All';
+// selectedCategory is window.selectedCategory (see STATE block above)
 let cart = [];
 let selectedItem = null;
 let selectedSize = null;
@@ -343,15 +349,18 @@ async function loadCategories() {
         const url = `${API_BASE_URL}/api/categories`;
         const res = await fetch(url);
         if (res.ok) {
-            categories = await res.json();
-            categories.unshift({ id: 0, name: 'All', display_order: 0 });
+            const cats = await res.json();
+            cats.unshift({ id: 0, name: 'All', display_order: 0 });
+            window.categories.length = 0;
+            cats.forEach(c => window.categories.push(c));
+            categories = window.categories;
             console.log('✅ Categories loaded:', categories);
         } else {
             throw new Error(`HTTP ${res.status}`);
         }
     } catch (error) {
         console.error('❌ Categories failed:', error);
-        categories = [
+        const fallbackCats = [
             { id: 0, name: 'All' },
             { id: 1, name: 'Breakfast' },
             { id: 2, name: 'Lunch' },
@@ -360,6 +369,9 @@ async function loadCategories() {
             { id: 5, name: 'Dessert' },
             { id: 6, name: 'Drinks' }
         ];
+        window.categories.length = 0;
+        fallbackCats.forEach(c => window.categories.push(c));
+        categories = window.categories;
     }
 }
 
@@ -376,7 +388,7 @@ async function loadMenu(category = 'All') {
         const items = await res.json();
         console.log('📦 Raw items received:', items.length);
 
-        menuItems = items.map(item => {
+        const mapped = items.map(item => {
     let sizes = null;
     if (item.has_sizes && item.sizes) {
         try {
@@ -403,11 +415,15 @@ async function loadMenu(category = 'All') {
     };
 });
 
+        // Replace array contents so window.menuItems reference stays valid
+        window.menuItems.length = 0;
+        mapped.forEach(i => window.menuItems.push(i));
+        menuItems = window.menuItems;
         console.log('✅ Menu items transformed:', menuItems.length);
 
     } catch (error) {
         console.error('❌ Menu load failed:', error);
-        menuItems = [];
+        window.menuItems.length = 0; menuItems = window.menuItems;
     }
 }
 
@@ -447,7 +463,7 @@ function renderCategories() {
 
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-            selectedCategory = btn.dataset.category;
+            selectedCategory = window.selectedCategory = btn.dataset.category;
             showLoading(true);
             await loadMenu(selectedCategory);
             renderCategories();
