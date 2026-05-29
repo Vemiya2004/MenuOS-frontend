@@ -144,10 +144,15 @@ async function applyBannerFilter(index) {
         }
         // Dedupe by id
         const seen = new Set();
-        menuItems = allItems.filter(item => {
+        const filtered = allItems.filter(item => {
             if (seen.has(item.id)) return false;
             seen.add(item.id); return true;
         }).map(item => mapMenuItem(item));
+
+        // Replace array contents (keep window.menuItems reference intact)
+        window.menuItems.length = 0;
+        filtered.forEach(i => window.menuItems.push(i));
+        menuItems = window.menuItems;
 
         // Update selected category display
         selectedCategory = window.selectedCategory = linked.length === 1 ? linked[0] : 'Banner';
@@ -157,7 +162,13 @@ async function applyBannerFilter(index) {
         const res = await fetch(`${API_BASE_URL}/api/menu`);
         const all = await res.json();
         const ids = linked.map(Number);
-        menuItems = all.filter(item => ids.includes(item.id)).map(item => mapMenuItem(item));
+        const foodFiltered = all.filter(item => ids.includes(item.id)).map(item => mapMenuItem(item));
+
+        // Replace array contents (keep window.menuItems reference intact)
+        window.menuItems.length = 0;
+        foodFiltered.forEach(i => window.menuItems.push(i));
+        menuItems = window.menuItems;
+
         selectedCategory = window.selectedCategory = 'Banner';
     }
 
@@ -194,8 +205,12 @@ function mapMenuItem(item) {
 
 // selectedCategory is window.selectedCategory (see STATE block above)
 let cart = [];
-let selectedItem = null;
-let selectedSize = null;
+// selectedItem & selectedSize exposed to window so menu.html override can set them
+// and addToCart() (which uses local refs) will read the same values
+window.selectedItem = null;
+window.selectedSize = null;
+let selectedItem = window.selectedItem;
+let selectedSize  = window.selectedSize;
 
 // =====================================================
 // ⭐ TOKEN VALIDATION
@@ -586,10 +601,10 @@ if (item.has_sizes && item.sizes && item.sizes.length > 0) {
 }
 
 function showItemModal(itemId) {
-    selectedItem = menuItems.find(item => item.id === itemId);
+    selectedItem = window.selectedItem = menuItems.find(item => item.id === itemId);
     if (!selectedItem) return;
 
-    selectedSize = null;
+    selectedSize = window.selectedSize = null;
 
     document.getElementById('modalName').textContent = selectedItem.name;
     document.getElementById('modalDescription').textContent = selectedItem.description || '';
@@ -627,7 +642,7 @@ function showItemModal(itemId) {
                 });
                 btn.style.background = '#2D7A7C';
                 btn.style.color = 'black';
-                selectedSize = selectedItem.sizes[parseInt(btn.dataset.idx)];
+                selectedSize = window.selectedSize = selectedItem.sizes[parseInt(btn.dataset.idx)];
                 addBtn.disabled = false;
                 addBtn.style.opacity = '1';
             });
@@ -667,6 +682,9 @@ function closeModal() {
 // =====================================================
 
 function addToCart() {
+    // Use window refs so menu.html override's assignments are visible here
+    selectedItem = window.selectedItem;
+    selectedSize  = window.selectedSize;
     if (!selectedItem) return;
     if (selectedItem.has_sizes && !selectedSize) {
         Swal.fire({
