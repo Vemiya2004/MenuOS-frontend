@@ -919,14 +919,15 @@ window.renderMenuItems = function() {
         return;
     }
 
-    // Group by category if showing All, else flat list with one section
-    const showingSingle = (window.selectedCategory && window.selectedCategory !== 'All');
+    // Group by category if showing All or Banner, else flat list with one section
+    const isBanner = (window.selectedCategory === 'Banner');
+    const showingSingle = (window.selectedCategory && window.selectedCategory !== 'All' && !isBanner);
     let html = '';
 
     if (showingSingle) {
         html += renderSection(window.selectedCategory, filtered, imgBase, placeholder);
     } else {
-        // Group
+        // Group by category (All view OR Banner filtered view)
         const grouped = {};
         filtered.forEach(item => {
             const cat = item.category || 'Other';
